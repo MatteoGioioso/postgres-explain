@@ -1,0 +1,9 @@
+[submodule "core"]
+	path = core
+	url = git@github.com:MatteoGioioso/postgres-explain-core.git
+[submodule "commons"]
+	path = commons
+	url = git@github.com:borealisdb/commons.git
+[submodule "web"]
+	path = web
+	url = git@github.com:MatteoGioioso/postgres-explain-web.git

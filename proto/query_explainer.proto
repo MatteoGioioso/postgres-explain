@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package borealis.v1beta1;
 
-option go_package = "postgres-explain/backend/proto";
+option go_package = "/proto";
 
 import "google/api/annotations.proto";
 import "google/protobuf/timestamp.proto";
