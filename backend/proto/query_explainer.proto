@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+package borealis.v1beta1;
+
+option go_package = "postgres-explain/backend/proto";
+
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+
+service QueryExplainer {
+  rpc GetQueryPlan(GetQueryPlanRequest) returns (GetQueryPlanResponse) {
+    option (google.api.http) = {
+      post: "/v0/explain/GetQueryPlan"
+      body: "*"
+    };
+  };
+}
+
+message GetQueryPlanRequest {
+  google.protobuf.Timestamp period_start_from = 1;
+  google.protobuf.Timestamp period_start_to = 2;
+  string cluster_name = 3;
+  string query_id = 4;
+  string namespace = 5;
+  repeated string parameters = 6;
+}
+
+message GetQueryPlanResponse {
+  string query_id = 2;
+  string query_plan = 1;
+}
