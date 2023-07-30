@@ -8,8 +8,8 @@ import (
 	"github.com/borealisdb/commons/postgresql"
 	"github.com/jmoiron/sqlx"
 	"github.com/sirupsen/logrus"
-	"log"
-	"postgres-explain/core/proto"
+	"postgres-explain/core/pkg"
+	"postgres-explain/proto"
 	"strings"
 )
 
@@ -48,10 +48,8 @@ func (aps *Service) GetQueryPlan(ctx context.Context, in *proto.GetQueryPlanRequ
 	conn, err := pg.GetConnection(
 		ctx,
 		in.ClusterName,
-		postgresql.Options{ // TODO this should NOT user Admin user
-			Database:        query.Database,
-			SSLRootCertPath: "/borealis/root.crt",
-			SSLDownload:     true,
+		postgresql.Options{
+			Database: query.Database,
 		},
 	)
 	if err != nil {
@@ -65,19 +63,19 @@ func (aps *Service) GetQueryPlan(ctx context.Context, in *proto.GetQueryPlanRequ
 
 	aps.log.Debugf("found plan for query %v: \n %v", query.Query, plan)
 
-	enrichedPlan, err := aps.enrichPlan(plan)
+	enrichedPlan, err := aps.processPlan(plan)
 	if err != nil {
 		return nil, fmt.Errorf("could not enrich plan: %v", err)
 	}
 
-	//stats, err := aps.getStatsFromPlan(plan)
-	//if err != nil {
-	//	return nil, fmt.Errorf("could get stats from plan: %v", err)
-	//}
+	marshalPlan, err := json.Marshal(enrichedPlan)
+	if err != nil {
+		return nil, fmt.Errorf("could not marshal plan: %v", err)
+	}
 
 	return &proto.GetQueryPlanResponse{
 		QueryId:   in.QueryId,
-		QueryPlan: enrichedPlan,
+		QueryPlan: string(marshalPlan),
 	}, nil
 }
 
@@ -90,13 +88,13 @@ func (aps *Service) runExplain(
 
 	tx, err := conn.BeginTx(ctx, nil)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("could not run transaction: %v", err)
 	}
 	defer tx.Rollback()
 
 	rows, err := tx.Query(fmt.Sprintf("EXPLAIN (ANALYZE, COSTS, VERBOSE, BUFFERS, FORMAT JSON) %v", query.Query))
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("could not run EXPLAIN query: %v", err)
 	}
 
 	var sb strings.Builder
@@ -104,15 +102,15 @@ func (aps *Service) runExplain(
 	for rows.Next() {
 		var s string
 		if err := rows.Scan(&s); err != nil {
-			log.Fatal(err)
+			return "", fmt.Errorf("could not scan row: %v", err)
 		}
 		sb.WriteString(s)
 		sb.WriteString("\n")
 	}
 
-	// In case of UPDATE or INSERT we don't want to change anything
+	// In case of UPDATE, DELETE or INSERT we don't want to persist the changes
 	if err := tx.Rollback(); err != nil {
-		return "", err
+		return "", fmt.Errorf("could not roll back transaction: %v", err)
 	}
 
 	aps.log.Debugf("found plan %v for query %v", sb.String(), query.Query)
@@ -120,41 +118,26 @@ func (aps *Service) runExplain(
 	return sb.String(), nil
 }
 
-func (aps *Service) enrichPlan(plan string) (string, error) {
-	type Plans []struct {
-		Plan map[string]interface{} `json:"Plan"`
-	}
-
-	p := Plans{}
-	if err := json.Unmarshal([]byte(plan), &p); err != nil {
-		return "", fmt.Errorf("could not unmarshal plan: %v", err)
-	}
-	NewPlanEnricher().AnalyzePlan(p[0].Plan)
-
-	marshalledEnrichedPlan, err := json.Marshal(p[0].Plan)
+func (aps *Service) processPlan(plan string) (pkg.Explained, error) {
+	node, err := pkg.GetRootNodeFromPlans(plan)
 	if err != nil {
-		return "", fmt.Errorf("could not marshal enriched plan: %v", err)
+		return pkg.Explained{}, fmt.Errorf("could not get root node from plan: %v", err)
 	}
 
-	return string(marshalledEnrichedPlan), nil
-}
+	pkg.NewPlanEnricher().AnalyzePlan(node)
 
-func (aps *Service) getStatsFromPlan(plan string) (string, error) {
-	type Stats struct {
-		ExecutionTime float64 `json:"Execution Time"`
-		PlanningTime  float64 `json:"Planning Time"`
-	}
-	type Plans []Stats
-
-	p := Plans{}
-	if err := json.Unmarshal([]byte(plan), &p); err != nil {
-		return "", fmt.Errorf("could not unmarshal plan: %v", err)
+	statsGather := pkg.NewStatsGather()
+	if err := statsGather.GetStatsFromPlans(plan); err != nil {
+		return pkg.Explained{}, fmt.Errorf("could not get stats from plan from plan: %v", err)
 	}
 
-	marshalledStats, err := json.Marshal(p[0])
-	if err != nil {
-		return "", fmt.Errorf("could not marshal enriched plan: %v", err)
-	}
+	stats := statsGather.ComputeStats(node)
+	indexesStats := statsGather.ComputeIndexesStats(node)
+	summary := pkg.NewSummary().Do(node, stats)
 
-	return string(marshalledStats), nil
+	return pkg.Explained{
+		Summary:      summary,
+		Stats:        stats,
+		IndexesStats: indexesStats,
+	}, nil
 }

@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package borealis.v1beta1;
+
+option go_package = "/proto";
+
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+
+service Info {
+  rpc GetClusters(GetClustersRequest) returns (GetClustersResponse) {
+    option (google.api.http) = {
+      post: "/v0/info/GetClusters"
+      body: "*"
+    };
+  };
+}
+
+message GetClustersRequest {
+}
+
+message GetClustersResponse {
+  repeated Clusters clusters = 1;
+}
+
+message Clusters {
+  string id = 2;
+  string name = 1;
+}

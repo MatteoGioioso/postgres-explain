@@ -9,6 +9,7 @@ import (
 	"github.com/borealisdb/commons/logger"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
+	"github.com/jmoiron/sqlx"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sys/unix"
 	"google.golang.org/grpc"
@@ -23,8 +24,6 @@ import (
 	"os/signal"
 	"postgres-explain/backend/auth"
 	"postgres-explain/backend/middlewares"
-	"postgres-explain/backend/query_explainer"
-	"postgres-explain/proto"
 	"sync"
 	"time"
 
@@ -32,7 +31,8 @@ import (
 )
 
 type Module interface {
-	Init(grpcServer *grpc.Server) error
+	Register(log *logrus.Entry, db *sqlx.DB, credentialsProvider credentials.Credentials)
+	Init(ctx context.Context, grpcServer *grpc.Server, mux *grpc_gateway.ServeMux, address string, opts []grpc.DialOption) error
 }
 
 const (
@@ -141,15 +141,6 @@ func main() {
 	clickhouseDSN := fmt.Sprintf("clickhouse://%v:%v/bmserver", *clickhouseHost, *clickhousePort)
 	db := NewDB(clickhouseDSN, maxIdleConns, maxOpenConns, log, "/migrations")
 
-	modulesList := []string{query_explainer.ModuleName}
-	modulesMap := map[string]Module{
-		query_explainer.ModuleName: &query_explainer.Module{
-			DB:                  db,
-			Log:                 log,
-			CredentialsProvider: credentialsProvider,
-		},
-	}
-
 	// handle termination signals
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, unix.SIGTERM, unix.SIGINT)
@@ -175,34 +166,10 @@ func main() {
 			}
 		}
 	}()
+
 	grpcAddress := ":" + (*grpcServerPort)
 	httpAddress := ":" + (*httpServerPort)
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		runGRPCServer(
-			modulesMap,
-			modulesList,
-			grpcAddress,
-			log,
-		)
-	}()
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		runHTTPServer(ctx, grpcAddress, httpAddress, authProvider.AuthMiddleware, log)
-	}()
-
-	wg.Wait()
-}
-
-func runGRPCServer(
-	modulesMap map[string]Module,
-	modulesList []string,
-	grpcAddress string,
-	log *logrus.Entry,
-) {
 	listen, err := net.Listen("tcp", grpcAddress)
 	if err != nil {
 		log.Fatalln(err)
@@ -217,31 +184,6 @@ func runGRPCServer(
 		)),
 	)
 
-	for _, moduleName := range modulesList {
-		module, ok := modulesMap[moduleName]
-		if ok {
-			if err := module.Init(grpcServer); err != nil {
-				log.Fatalln("Module failed to initialize: %v", err)
-			}
-		}
-	}
-
-	reflection.Register(grpcServer)
-
-	if err := grpcServer.Serve(listen); err != nil {
-		log.Fatalln(err)
-	}
-}
-
-func runHTTPServer(
-	ctx context.Context,
-	grpcAddress, httpAddress string,
-	authMiddleware func(h http.HandlerFunc) http.HandlerFunc,
-	log *logrus.Entry,
-) {
-	l := logrus.WithField("component", "JSON")
-	l.Infof("Starting server on http://0.0.0.0:%s/ ...", httpAddress)
-
 	marshaller := &grpc_gateway.JSONPb{
 		MarshalOptions: protojson.MarshalOptions{ //nolint:exhaustivestruct
 			UseEnumNumbers:  false,
@@ -253,20 +195,49 @@ func runHTTPServer(
 			DiscardUnknown: true,
 		},
 	}
-
 	proxyMux := grpc_gateway.NewServeMux(
 		grpc_gateway.WithMarshalerOption(grpc_gateway.MIMEWildcard, marshaller),
 	)
 	opts := []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
 
-	type registrar func(context.Context, *grpc_gateway.ServeMux, string, []grpc.DialOption) error
-	for _, r := range []registrar{
-		proto.RegisterQueryExplainerHandlerFromEndpoint,
-	} {
-		if err := r(ctx, proxyMux, grpcAddress, opts); err != nil {
-			l.Panic(err)
+	// Modules instantiation
+	modulesMap, err := GetModules()
+	if err != nil {
+		log.Fatalln(err)
+	}
+	for _, module := range modulesMap {
+		module.Register(log, db, credentialsProvider)
+		if err := module.Init(ctx, grpcServer, proxyMux, httpAddress, opts); err != nil {
+			log.Fatalln("Module failed to initialize: %v", err)
 		}
 	}
+
+	reflection.Register(grpcServer)
+
+	wg.Add(1)
+	go func() {
+		if err := grpcServer.Serve(listen); err != nil {
+			log.Fatalln(err)
+		}
+	}()
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		runHTTPServer(ctx, proxyMux, httpAddress, authProvider.AuthMiddleware, log)
+	}()
+
+	wg.Wait()
+}
+
+func runHTTPServer(
+	ctx context.Context,
+	proxyMux *grpc_gateway.ServeMux, httpAddress string,
+	authMiddleware func(h http.HandlerFunc) http.HandlerFunc,
+	log *logrus.Entry,
+) {
+	l := logrus.WithField("component", "JSON")
+	l.Infof("Starting server on http://0.0.0.0:%s/ ...", httpAddress)
 
 	stack := []middlewares.Middleware{
 		authMiddleware,

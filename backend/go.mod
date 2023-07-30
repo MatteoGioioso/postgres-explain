@@ -6,6 +6,8 @@ replace github.com/borealisdb/commons => ../commons
 
 replace postgres-explain/proto => ../proto
 
+replace postgres-explain/core => ../core
+
 require (
 	github.com/ClickHouse/clickhouse-go/v2 v2.11.0
 	github.com/borealisdb/commons v0.0.0-00010101000000-000000000000
@@ -21,6 +23,7 @@ require (
 	google.golang.org/grpc v1.57.0
 	google.golang.org/protobuf v1.31.0
 	gopkg.in/alecthomas/kingpin.v2 v2.2.6
+	postgres-explain/core v0.0.0-00010101000000-000000000000
 	postgres-explain/proto v0.0.0-00010101000000-000000000000
 )
 
@@ -71,7 +74,7 @@ require (
 	golang.org/x/time v0.0.0-20220210224613-90d013bbcef8 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20230706204954-ccb25ca9f130 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20230724170836-66ad5b6ff146 // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20230726155614-23370e0ffb3e // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20230724170836-66ad5b6ff146 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect

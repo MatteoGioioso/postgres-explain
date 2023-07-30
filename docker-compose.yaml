@@ -1,0 +1,46 @@
+services:
+  backend:
+    container_name: backend
+    image: postgres-explain/backend:latest
+    restart: on-failure
+    build:
+      dockerfile: Dockerfile
+      args:
+        USER: backend
+        GROUP: postgres-explain
+      context: backend
+
+  postgres:
+    image: postgres:15
+    hostname: postgres
+    command: -c shared_preload_libraries='pg_stat_statements'
+    ports:
+      - "5432:5432"
+    container_name: postgres
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+
+  clickhouse:
+    image: clickhouse/clickhouse-server
+    container_name: clickhouse
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
+    ports:
+      - "9001:9000"
+      - "8123:8123"
+
+  pgbench:
+    container_name: pgbench
+    image: borealis/pgbench:latest
+    build:
+      dockerfile: pgbench.Dockerfile
+      context: pg_bench
+    restart: always # Run continuously
+    command: postgres
+    environment:
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGDATABASE: postgres

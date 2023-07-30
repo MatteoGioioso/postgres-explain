@@ -137,7 +137,7 @@ func runMigrations(dsn string, log *logrus.Entry, borealisDir string) error {
 	return err
 }
 
-// DropOldPartition drops number of days old partitions of bm_server.metrics in ClickHouse.
+// DropOldPartition drops number of days old partitions.
 func DropOldPartition(db *sqlx.DB, table string, days uint, log *logrus.Entry) {
 	partitions := []string{}
 	const query = `
@@ -151,7 +151,7 @@ func DropOldPartition(db *sqlx.DB, table string, days uint, log *logrus.Entry) {
 		days,
 	)
 	if err != nil {
-		log.Infof("Select %d days old partitions of system.parts. Result: %v, Error: %v", days, partitions, err)
+		log.Errorf("Select %d days old partitions of system.parts. Result: %v, Error: %v", days, partitions, err)
 		return
 	}
 	for _, part := range partitions {
