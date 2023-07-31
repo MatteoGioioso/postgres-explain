@@ -8,6 +8,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
+	"postgres-explain/backend/modules"
 	"postgres-explain/proto"
 )
 
@@ -19,7 +20,13 @@ type Module struct {
 	CredentialsProvider credentials.Credentials
 }
 
-func (m Module) Init(ctx context.Context, grpcServer *grpc.Server, mux *runtime.ServeMux, address string, opts []grpc.DialOption) error {
+func (m *Module) Register(log *logrus.Entry, db *sqlx.DB, credentialsProvider credentials.Credentials, params modules.Params) {
+	m.Log = log
+	m.DB = db
+	m.CredentialsProvider = credentialsProvider
+}
+
+func (m *Module) Init(ctx context.Context, grpcServer *grpc.Server, mux *runtime.ServeMux, address string, opts []grpc.DialOption) error {
 	repository := Repository{DB: m.DB}
 	service := Service{
 		log:                 m.Log.WithField("module", ModuleName),

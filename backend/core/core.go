@@ -6,5 +6,6 @@ import (
 )
 
 var CoreModules = map[string]modules.Module{
-	query_explainer.ModuleName: query_explainer.Module{},
+	query_explainer.ModuleName: &query_explainer.Module{},
+	//info.ModuleName:            info.Module{},
 }

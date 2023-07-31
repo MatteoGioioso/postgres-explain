@@ -6,9 +6,9 @@ import (
 	"strings"
 )
 
-type Middleware func(http.HandlerFunc) http.HandlerFunc
+type Middleware func(handler http.Handler) http.Handler
 
-func CompileMiddleware(h http.HandlerFunc, m []Middleware) http.HandlerFunc {
+func CompileMiddleware(h http.Handler, m []Middleware) http.Handler {
 	if len(m) < 1 {
 		return h
 	}
@@ -23,7 +23,7 @@ func CompileMiddleware(h http.HandlerFunc, m []Middleware) http.HandlerFunc {
 	return wrapped
 }
 
-func CORSMiddleware(h http.HandlerFunc) http.HandlerFunc {
+func CORSMiddleware(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if origin := r.Header.Get("Origin"); origin != "" {
 			w.Header().Set("Access-Control-Allow-Origin", origin)

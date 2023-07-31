@@ -14,9 +14,11 @@ require (
 	github.com/coreos/go-oidc/v3 v3.6.0
 	github.com/golang-migrate/migrate v3.5.4+incompatible
 	github.com/golang/glog v1.1.1
-	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
+	github.com/google/uuid v1.3.0
+	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.16.1
 	github.com/jmoiron/sqlx v1.3.5
+	github.com/pganalyze/pg_query_go/v4 v4.2.1
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.9.3
 	golang.org/x/sys v0.10.0
@@ -47,7 +49,6 @@ require (
 	github.com/google/gnostic v0.5.7-v3refs // indirect
 	github.com/google/go-cmp v0.5.9 // indirect
 	github.com/google/gofuzz v1.1.0 // indirect
-	github.com/google/uuid v1.3.0 // indirect
 	github.com/imdario/mergo v0.3.6 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect

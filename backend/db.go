@@ -21,7 +21,7 @@ const (
 )
 
 // NewDB return updated db.
-func NewDB(dsn string, maxIdleConns, maxOpenConns int, log *logrus.Entry, borealisDir string) *sqlx.DB {
+func NewDB(dsn string, maxIdleConns, maxOpenConns int, log *logrus.Entry, migrationFolder string) *sqlx.DB {
 	db, err := connect(dsn, log)
 	if err != nil {
 		log.Fatalln(err)
@@ -39,7 +39,7 @@ func NewDB(dsn string, maxIdleConns, maxOpenConns int, log *logrus.Entry, boreal
 	db.SetMaxIdleConns(maxIdleConns)
 	db.SetMaxOpenConns(maxOpenConns)
 
-	if err := runMigrations(dsn, log, borealisDir); err != nil {
+	if err := runMigrations(dsn, log, migrationFolder); err != nil {
 		log.Fatal("Migrations: ", err)
 	}
 	log.Infof("Migrations applied.")
@@ -122,9 +122,9 @@ func connect(dsn string, log *logrus.Entry) (db *sqlx.DB, err error) {
 	return db, err
 }
 
-func runMigrations(dsn string, log *logrus.Entry, borealisDir string) error {
+func runMigrations(dsn string, log *logrus.Entry, migrationFolder string) error {
 	log.Infof("dsn: %v", dsn)
-	m, err := migrate.New(fmt.Sprintf("file://%v/monitoring-migrations", borealisDir), dsn)
+	m, err := migrate.New(fmt.Sprintf("file://%v", migrationFolder), dsn)
 	if err != nil {
 		return err
 	}

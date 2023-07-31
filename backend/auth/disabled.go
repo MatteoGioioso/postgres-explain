@@ -12,7 +12,7 @@ type Disabled struct {
 	Log *logrus.Entry
 }
 
-func (d Disabled) AuthMiddleware(h http.HandlerFunc) http.HandlerFunc {
+func (d Disabled) AuthMiddleware(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		h.ServeHTTP(w, r)
 	})

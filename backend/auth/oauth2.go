@@ -43,7 +43,7 @@ func (d *Oauth2) verifyToken(ctx context.Context, rawIDToken string) (auth.IDTok
 	return claims, err
 }
 
-func (d *Oauth2) AuthMiddleware(h http.HandlerFunc) http.HandlerFunc {
+func (d *Oauth2) AuthMiddleware(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		borealisCookie, err := r.Cookie("borealis")
 		if err != nil {

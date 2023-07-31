@@ -10,6 +10,9 @@ import (
 )
 
 type Module interface {
-	Register(log *logrus.Entry, db *sqlx.DB, credentialsProvider credentials.Credentials)
-	Init(ctx context.Context, grpcServer *grpc.Server, mux *grpc_gateway.ServeMux, address string, opts []grpc.DialOption) error
+	Register(log *logrus.Entry, db *sqlx.DB, credentialsProvider credentials.Credentials, params Params)
+	Init(ctx context.Context, grpcServer *grpc.Server, mux *grpc_gateway.ServeMux, grpcAddress string, opts []grpc.DialOption) error
+}
+
+type Params struct {
 }

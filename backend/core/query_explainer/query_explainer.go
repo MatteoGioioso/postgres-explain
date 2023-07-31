@@ -8,6 +8,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
+	"postgres-explain/backend/modules"
 	"postgres-explain/proto"
 )
 
@@ -19,16 +20,17 @@ type Module struct {
 	CredentialsProvider credentials.Credentials
 }
 
-func (m Module) Register(log *logrus.Entry, db *sqlx.DB, credentialsProvider credentials.Credentials) {
-	m.Log = log
+func (m *Module) Register(log *logrus.Entry, db *sqlx.DB, credentialsProvider credentials.Credentials, params modules.Params) {
+	m.Log = log.WithField("module", ModuleName)
 	m.DB = db
 	m.CredentialsProvider = credentialsProvider
+	m.Log.Infof("registered")
 }
 
-func (m Module) Init(ctx context.Context, grpcServer *grpc.Server, mux *runtime.ServeMux, address string, opts []grpc.DialOption) error {
+func (m *Module) Init(ctx context.Context, grpcServer *grpc.Server, mux *runtime.ServeMux, address string, opts []grpc.DialOption) error {
 	repository := Repository{DB: m.DB}
 	service := Service{
-		log:                 m.Log.WithField("module", ModuleName),
+		log:                 m.Log,
 		Repo:                repository,
 		credentialsProvider: m.CredentialsProvider,
 	}
@@ -37,5 +39,6 @@ func (m Module) Init(ctx context.Context, grpcServer *grpc.Server, mux *runtime.
 	if err := proto.RegisterQueryExplainerHandlerFromEndpoint(ctx, mux, address, opts); err != nil {
 		return fmt.Errorf("could not register QueryExplainerHandlerFromEndpoint: %v", err)
 	}
+	m.Log.Infof("initiated")
 	return nil
 }

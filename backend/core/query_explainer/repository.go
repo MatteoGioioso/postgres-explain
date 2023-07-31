@@ -23,7 +23,7 @@ type Repository struct {
 	DB *sqlx.DB
 }
 
-func (ar Repository) GetLongestQueryByID(ctx context.Context, args QueryArgs, queryID string) (LongestQueryDB, error) {
+func (ar Repository) GetLongestQueryByID(ctx context.Context, args QueryArgs, queryID string) (PlanRequest, error) {
 	queryArgs := map[string]interface{}{
 		"period_start_from": args.PeriodStartFromSec,
 		"period_start_to":   args.PeriodStartToSec,
@@ -32,34 +32,68 @@ func (ar Repository) GetLongestQueryByID(ctx context.Context, args QueryArgs, qu
 	}
 	rows, err := ar.DB.NamedQueryContext(ctx, longestQueryByID, queryArgs)
 	if err != nil {
-		return LongestQueryDB{}, err
+		return PlanRequest{}, err
 	}
-	longestQueriesDB := make([]LongestQueryDB, 0)
+	longestQueriesDB := make([]PlanRequest, 0)
 	for rows.Next() {
-		longestQueryDB := LongestQueryDB{}
+		longestQueryDB := PlanRequest{}
 		if err := rows.StructScan(&longestQueryDB); err != nil {
-			return LongestQueryDB{}, err
+			return PlanRequest{}, err
 		}
 
 		longestQueriesDB = append(longestQueriesDB, longestQueryDB)
 	}
 
 	if len(longestQueriesDB) == 0 {
-		return LongestQueryDB{}, fmt.Errorf("query with id: %v, not found", queryID)
+		return PlanRequest{}, fmt.Errorf("query with id: %v, not found", queryID)
 	}
 
 	return longestQueriesDB[0], nil
 }
 
-type LongestQueryDB struct {
-	Query    string  `json:"query"`
-	ID       string  `json:"query_id"`
-	Database string  `json:"datname"`
-	Duration float32 `json:"duration"`
-}
+const insertQueryPlan = `
+  INSERT INTO plans
+  (
+	id, 
+   alias,
+   query_fingerprint,
+   queryid,
+   plan,
+   original_plan,
+   query,
+   database,
+   schema,
+   username,
+   cluster,
+   period_start
+   )
+VALUES (
+    :id,
+	:alias,
+	:query_fingerprint,
+	:queryid,
+	:plan,
+	:original_plan,
+	:query,
+	:database,
+	:schema,
+	:username,
+	:cluster,
+	:period_start
+  )
+`
 
-type QueryArgs struct {
-	PeriodStartFromSec int64
-	PeriodStartToSec   int64
-	ClusterName        string
+func (ar Repository) SaveQueryPlan(ctx context.Context, entity PlanEntity) error {
+	stmt, err := ar.DB.PrepareNamed(insertQueryPlan)
+	if err != nil {
+		return fmt.Errorf("failed to prepare statement: %v", err)
+	}
+
+	defer stmt.Close()
+
+	if _, err := stmt.ExecContext(ctx, entity); err != nil {
+		return fmt.Errorf("could not execute statement: %v", err)
+	}
+
+	return nil
 }

@@ -2,19 +2,20 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"github.com/borealisdb/commons/constants"
 	"github.com/borealisdb/commons/credentials"
 	env "github.com/borealisdb/commons/environment"
 	"github.com/borealisdb/commons/logger"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
-	"github.com/jmoiron/sqlx"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sys/unix"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/reflection"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
 	"gopkg.in/alecthomas/kingpin.v2"
 	stdLog "log"
@@ -24,16 +25,13 @@ import (
 	"os/signal"
 	"postgres-explain/backend/auth"
 	"postgres-explain/backend/middlewares"
+	"postgres-explain/backend/modules"
+	"runtime/debug"
 	"sync"
 	"time"
 
 	grpc_gateway "github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 )
-
-type Module interface {
-	Register(log *logrus.Entry, db *sqlx.DB, credentialsProvider credentials.Credentials)
-	Init(ctx context.Context, grpcServer *grpc.Server, mux *grpc_gateway.ServeMux, address string, opts []grpc.DialOption) error
-}
 
 const (
 	shutdownTimeout = 3 * time.Second
@@ -56,11 +54,11 @@ var (
 			String()
 	grpcServerPort = kingpin.Flag("grpc-server-port", "").
 			Envar("GRPC_SERVER_PORT").
-			Default(constants.MonitoringAPIGRPCPort).
+			Default("8081").
 			String()
 	httpServerPort = kingpin.Flag("http-server-port", "").
 			Envar("HTTP_SERVER_PORT").
-			Default(constants.MonitoringAPIPort).
+			Default("8082").
 			String()
 	clientID = kingpin.Flag("client-id", "").
 			Envar("CLIENT_ID").
@@ -81,6 +79,10 @@ var (
 	environment = kingpin.Flag("environment", "").
 			Envar("ENVIRONMENT").
 			Enum(env.Kubernetes, env.VM, env.Mock)
+	credentialProvider = kingpin.Flag("credential-provider", "").
+				Envar("ENVIRONMENT").
+				Default(credentials.EnvironmentProvider).
+				Enum(credentials.EnvironmentProvider, credentials.KubernetesProvider)
 	logLevelRaw = kingpin.Flag("log-level", "").
 			Envar("LOG_LEVEL").
 			Default("info").
@@ -103,7 +105,7 @@ func main() {
 
 	ctx, cancel := context.WithCancel(context.Background())
 
-	log := logger.NewDefaultLogger(*logLevelRaw, "monitoring-server")
+	log := logger.NewDefaultLogger(*logLevelRaw, "backend")
 	log.Infof("Starting")
 
 	authFactory := auth.Factory{Providers: map[string]auth.Auth{
@@ -124,21 +126,16 @@ func main() {
 		log.Fatalln(err)
 	}
 
-	determinedEnvironment, err := env.DetermineEnvironment(*environment)
-	if err != nil {
-		log.Fatalln(err)
-	}
-
 	credentialsFactory := credentials.Factory{Providers: map[string]credentials.Credentials{
-		env.Kubernetes: &credentials.Kubernetes{},
-		env.VM:         &credentials.VM{},
+		credentials.KubernetesProvider:  &credentials.Kubernetes{},
+		credentials.EnvironmentProvider: &credentials.Environment{},
 	}}
-	credentialsProvider := credentialsFactory.Get(determinedEnvironment)
+	credentialsProvider := credentialsFactory.Get(*credentialProvider)
 	if err := credentialsProvider.Init(); err != nil {
 		log.Fatalln(err)
 	}
 
-	clickhouseDSN := fmt.Sprintf("clickhouse://%v:%v/bmserver", *clickhouseHost, *clickhousePort)
+	clickhouseDSN := fmt.Sprintf("clickhouse://%v:%v/backend", *clickhouseHost, *clickhousePort)
 	db := NewDB(clickhouseDSN, maxIdleConns, maxOpenConns, log, "/migrations")
 
 	// handle termination signals
@@ -180,7 +177,9 @@ func main() {
 			grpc_recovery.StreamServerInterceptor(),
 		)),
 		grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(
-			grpc_recovery.UnaryServerInterceptor(),
+			grpc_recovery.UnaryServerInterceptor(grpc_recovery.WithRecoveryHandler(func(p interface{}) (err error) {
+				return status.Errorf(codes.Unknown, "panic triggered: %v, %v", p, string(debug.Stack()))
+			})),
 		)),
 	)
 
@@ -206,8 +205,8 @@ func main() {
 		log.Fatalln(err)
 	}
 	for _, module := range modulesMap {
-		module.Register(log, db, credentialsProvider)
-		if err := module.Init(ctx, grpcServer, proxyMux, httpAddress, opts); err != nil {
+		module.Register(log, db, credentialsProvider, modules.Params{})
+		if err := module.Init(ctx, grpcServer, proxyMux, grpcAddress, opts); err != nil {
 			log.Fatalln("Module failed to initialize: %v", err)
 		}
 	}
@@ -232,8 +231,9 @@ func main() {
 
 func runHTTPServer(
 	ctx context.Context,
-	proxyMux *grpc_gateway.ServeMux, httpAddress string,
-	authMiddleware func(h http.HandlerFunc) http.HandlerFunc,
+	proxyMux *grpc_gateway.ServeMux,
+	httpAddress string,
+	authMiddleware func(h http.Handler) http.Handler,
 	log *logrus.Entry,
 ) {
 	l := logrus.WithField("component", "JSON")
@@ -245,15 +245,15 @@ func runHTTPServer(
 	}
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("/", middlewares.CompileMiddleware(proxyMux.ServeHTTP, stack))
+	mux.Handle("/", middlewares.CompileMiddleware(proxyMux, stack))
 
 	server := &http.Server{
 		Addr:     httpAddress,
-		ErrorLog: stdLog.New(logrusErrorWriter{Log: log}, "", 0),
+		ErrorLog: stdLog.New(logrusErrorWriter{Log: log}, "server", 0),
 		Handler:  mux,
 	}
 	go func() {
-		if err := server.ListenAndServe(); err != http.ErrServerClosed {
+		if err := server.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
 			l.Panic(err)
 		}
 		l.Println("Server stopped.")

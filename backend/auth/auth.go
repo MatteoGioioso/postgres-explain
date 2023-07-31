@@ -6,7 +6,7 @@ import (
 )
 
 type Auth interface {
-	AuthMiddleware(h http.HandlerFunc) http.HandlerFunc
+	AuthMiddleware(h http.Handler) http.Handler
 	Init(ctx context.Context, params Params) error
 }
 

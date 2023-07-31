@@ -6,11 +6,14 @@ import (
 	"fmt"
 	"github.com/borealisdb/commons/credentials"
 	"github.com/borealisdb/commons/postgresql"
+	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
+	pg_query "github.com/pganalyze/pg_query_go/v4"
 	"github.com/sirupsen/logrus"
 	"postgres-explain/core/pkg"
 	"postgres-explain/proto"
 	"strings"
+	"time"
 )
 
 type Service struct {
@@ -20,48 +23,33 @@ type Service struct {
 	proto.QueryExplainerServer
 }
 
-func (aps *Service) GetQueryPlan(ctx context.Context, in *proto.GetQueryPlanRequest) (*proto.GetQueryPlanResponse, error) {
-	if in.PeriodStartFrom == nil || in.PeriodStartTo == nil {
-		return nil, fmt.Errorf("from-date: %s or to-date: %s cannot be empty", in.PeriodStartFrom, in.PeriodStartTo)
-	}
-
-	periodStartFromSec := in.PeriodStartFrom.Seconds
-	periodStartToSec := in.PeriodStartTo.Seconds
-	if periodStartFromSec > periodStartToSec {
-		return nil, fmt.Errorf("from-date %s cannot be bigger then to-date %s", in.PeriodStartFrom, in.PeriodStartTo)
-	}
-
-	query, err := aps.Repo.GetLongestQueryByID(
-		ctx,
-		QueryArgs{
-			PeriodStartFromSec: periodStartFromSec,
-			PeriodStartToSec:   periodStartToSec,
-			ClusterName:        in.ClusterName,
-		},
-		in.QueryId,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("could not get longest query from clickhouse: %v", err)
-	}
-
+func (aps *Service) SaveQueryPlan(ctx context.Context, request *proto.SaveQueryPlanRequest) (*proto.SaveQueryPlanResponse, error) {
 	pg := postgresql.PG{CredentialsProvider: aps.credentialsProvider}
-	conn, err := pg.GetConnection(
-		ctx,
-		in.ClusterName,
-		postgresql.Options{
-			Database: query.Database,
-		},
-	)
+	conn, err := pg.GetConnection(ctx, request.ClusterName, "", postgresql.Options{
+		Database: request.Database,
+	})
 	if err != nil {
 		return nil, fmt.Errorf("could not get postgres connection pg.GetConnection: %v", err)
 	}
 
-	plan, err := aps.runExplain(ctx, conn, query)
+	planRequest := PlanRequest{}
+
+	if request.QueryId == "" {
+		planRequest.QueryID = request.QueryId
+		// Get query from the pg_stats_statements
+		// planRequest.Query =
+		// planRequest.Database =
+	} else {
+		planRequest.Query = request.Query
+		planRequest.Database = request.Database
+	}
+
+	plan, err := aps.runExplain(ctx, conn, planRequest)
 	if err != nil {
 		return nil, fmt.Errorf("could not run explain: %v", err)
 	}
 
-	aps.log.Debugf("found plan for query %v: \n %v", query.Query, plan)
+	aps.log.Debugf("found plan for query %v: \n %v", planRequest.Query, plan)
 
 	enrichedPlan, err := aps.processPlan(plan)
 	if err != nil {
@@ -73,16 +61,42 @@ func (aps *Service) GetQueryPlan(ctx context.Context, in *proto.GetQueryPlanRequ
 		return nil, fmt.Errorf("could not marshal plan: %v", err)
 	}
 
-	return &proto.GetQueryPlanResponse{
-		QueryId:   in.QueryId,
-		QueryPlan: string(marshalPlan),
-	}, nil
+	// Calculate fingerprint
+	// https://pganalyze.com/blog/pg-query-2-0-postgres-query-parser#why-did-we-create-our-own-query-fingerprint-concept
+	// https://github.com/pganalyze/pg_query_go
+	fingerprint, err := pg_query.Fingerprint(planRequest.Query)
+	if err != nil {
+		return nil, fmt.Errorf("could not calculate query Fingerprint %v", err)
+	}
+
+	planEntity := PlanEntity{
+		Query:            planRequest.Query,
+		PlanID:           uuid.New().String(),
+		QueryID:          planRequest.QueryID,
+		QueryFingerprint: fingerprint,
+		OriginalPlan:     plan,
+		ClusterName:      request.ClusterName,
+		Database:         planRequest.Database,
+		Plan:             string(marshalPlan),
+		PeriodStart:      time.Now(),
+	}
+
+	if err := aps.Repo.SaveQueryPlan(ctx, planEntity); err != nil {
+		return nil, fmt.Errorf("could not SaveQueryPlan: %v", err)
+	}
+
+	return &proto.SaveQueryPlanResponse{PlanId: planEntity.PlanID}, nil
+}
+
+func (aps *Service) GetQueryPlan(ctx context.Context, request *proto.GetQueryPlanRequest) (*proto.GetQueryPlanResponse, error) {
+	//TODO implement me
+	panic("implement me")
 }
 
 func (aps *Service) runExplain(
 	ctx context.Context,
 	conn *sqlx.DB,
-	query LongestQueryDB,
+	query PlanRequest,
 ) (string, error) {
 	defer conn.Close()
 
