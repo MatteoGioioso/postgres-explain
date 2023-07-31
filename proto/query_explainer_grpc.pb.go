@@ -22,6 +22,7 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type QueryExplainerClient interface {
+	SaveQueryPlan(ctx context.Context, in *SaveQueryPlanRequest, opts ...grpc.CallOption) (*SaveQueryPlanResponse, error)
 	GetQueryPlan(ctx context.Context, in *GetQueryPlanRequest, opts ...grpc.CallOption) (*GetQueryPlanResponse, error)
 }
 
@@ -31,6 +32,15 @@ type queryExplainerClient struct {
 
 func NewQueryExplainerClient(cc grpc.ClientConnInterface) QueryExplainerClient {
 	return &queryExplainerClient{cc}
+}
+
+func (c *queryExplainerClient) SaveQueryPlan(ctx context.Context, in *SaveQueryPlanRequest, opts ...grpc.CallOption) (*SaveQueryPlanResponse, error) {
+	out := new(SaveQueryPlanResponse)
+	err := c.cc.Invoke(ctx, "/borealis.v1beta1.QueryExplainer/SaveQueryPlan", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (c *queryExplainerClient) GetQueryPlan(ctx context.Context, in *GetQueryPlanRequest, opts ...grpc.CallOption) (*GetQueryPlanResponse, error) {
@@ -46,6 +56,7 @@ func (c *queryExplainerClient) GetQueryPlan(ctx context.Context, in *GetQueryPla
 // All implementations must embed UnimplementedQueryExplainerServer
 // for forward compatibility
 type QueryExplainerServer interface {
+	SaveQueryPlan(context.Context, *SaveQueryPlanRequest) (*SaveQueryPlanResponse, error)
 	GetQueryPlan(context.Context, *GetQueryPlanRequest) (*GetQueryPlanResponse, error)
 	mustEmbedUnimplementedQueryExplainerServer()
 }
@@ -54,6 +65,9 @@ type QueryExplainerServer interface {
 type UnimplementedQueryExplainerServer struct {
 }
 
+func (UnimplementedQueryExplainerServer) SaveQueryPlan(context.Context, *SaveQueryPlanRequest) (*SaveQueryPlanResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SaveQueryPlan not implemented")
+}
 func (UnimplementedQueryExplainerServer) GetQueryPlan(context.Context, *GetQueryPlanRequest) (*GetQueryPlanResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetQueryPlan not implemented")
 }
@@ -68,6 +82,24 @@ type UnsafeQueryExplainerServer interface {
 
 func RegisterQueryExplainerServer(s grpc.ServiceRegistrar, srv QueryExplainerServer) {
 	s.RegisterService(&QueryExplainer_ServiceDesc, srv)
+}
+
+func _QueryExplainer_SaveQueryPlan_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SaveQueryPlanRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryExplainerServer).SaveQueryPlan(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/borealis.v1beta1.QueryExplainer/SaveQueryPlan",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryExplainerServer).SaveQueryPlan(ctx, req.(*SaveQueryPlanRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _QueryExplainer_GetQueryPlan_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -95,6 +127,10 @@ var QueryExplainer_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "borealis.v1beta1.QueryExplainer",
 	HandlerType: (*QueryExplainerServer)(nil),
 	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "SaveQueryPlan",
+			Handler:    _QueryExplainer_SaveQueryPlan_Handler,
+		},
 		{
 			MethodName: "GetQueryPlan",
 			Handler:    _QueryExplainer_GetQueryPlan_Handler,

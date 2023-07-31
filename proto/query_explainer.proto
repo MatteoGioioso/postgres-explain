@@ -8,6 +8,13 @@ import "google/api/annotations.proto";
 import "google/protobuf/timestamp.proto";
 
 service QueryExplainer {
+  rpc SaveQueryPlan(SaveQueryPlanRequest) returns (SaveQueryPlanResponse) {
+    option (google.api.http) = {
+      post: "/v0/explain/SaveQueryPlan"
+      body: "*"
+    };
+  };
+
   rpc GetQueryPlan(GetQueryPlanRequest) returns (GetQueryPlanResponse) {
     option (google.api.http) = {
       post: "/v0/explain/GetQueryPlan"
@@ -16,16 +23,28 @@ service QueryExplainer {
   };
 }
 
-message GetQueryPlanRequest {
+message SaveQueryPlanRequest {
   google.protobuf.Timestamp period_start_from = 1;
   google.protobuf.Timestamp period_start_to = 2;
+
   string cluster_name = 3;
   string query_id = 4;
-  string namespace = 5;
-  repeated string parameters = 6;
+  string query = 7;
+  string database = 5;
+  string namespace = 6;
+}
+
+message SaveQueryPlanResponse {
+  string plan_id = 1;
+}
+
+message GetQueryPlanRequest {
+  string plan_id = 1;
 }
 
 message GetQueryPlanResponse {
   string query_id = 2;
   string query_plan = 1;
+  string query_original_plan = 3;
+  string query_fingerprint = 5;
 }
