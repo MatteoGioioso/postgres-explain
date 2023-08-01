@@ -10,6 +10,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	pg_query "github.com/pganalyze/pg_query_go/v4"
 	"github.com/sirupsen/logrus"
+	"postgres-explain/backend/shared"
 	"postgres-explain/core/pkg"
 	"postgres-explain/proto"
 	"strings"
@@ -34,14 +35,15 @@ func (aps *Service) SaveQueryPlan(ctx context.Context, request *proto.SaveQueryP
 
 	planRequest := PlanRequest{}
 
+	// Custom query
 	if request.QueryId == "" {
+		planRequest.Query = request.Query
+		planRequest.Database = request.Database
+	} else {
 		planRequest.QueryID = request.QueryId
 		// Get query from the pg_stats_statements
 		// planRequest.Query =
 		// planRequest.Database =
-	} else {
-		planRequest.Query = request.Query
-		planRequest.Database = request.Database
 	}
 
 	plan, err := aps.runExplain(ctx, conn, planRequest)
@@ -72,7 +74,7 @@ func (aps *Service) SaveQueryPlan(ctx context.Context, request *proto.SaveQueryP
 	planEntity := PlanEntity{
 		Query:            planRequest.Query,
 		PlanID:           uuid.New().String(),
-		QueryID:          planRequest.QueryID,
+		QueryID:          shared.ToSqlNullString(planRequest.QueryID),
 		QueryFingerprint: fingerprint,
 		OriginalPlan:     plan,
 		ClusterName:      request.ClusterName,
@@ -89,8 +91,19 @@ func (aps *Service) SaveQueryPlan(ctx context.Context, request *proto.SaveQueryP
 }
 
 func (aps *Service) GetQueryPlan(ctx context.Context, request *proto.GetQueryPlanRequest) (*proto.GetQueryPlanResponse, error) {
-	//TODO implement me
-	panic("implement me")
+	plan, err := aps.Repo.GetQueryPlan(ctx, request.PlanId)
+	if err != nil {
+		return nil, err
+	}
+
+	return &proto.GetQueryPlanResponse{
+		PlanId:            plan.PlanID,
+		QueryId:           plan.QueryID.String,
+		QueryPlan:         plan.Plan,
+		QueryOriginalPlan: plan.OriginalPlan,
+		QueryFingerprint:  plan.QueryFingerprint,
+		Query:             plan.Query,
+	}, err
 }
 
 func (aps *Service) runExplain(

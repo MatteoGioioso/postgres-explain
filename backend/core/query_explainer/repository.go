@@ -6,49 +6,49 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-const longestQueryByID = `
-SELECT query_id,
-       query, 
-       duration,
-       datname
-FROM activities
-WHERE period_start > :period_start_from 
-  AND period_start < :period_start_to 
-  AND query_id = :query_id
-  AND cluster_name = :cluster_name
-ORDER BY duration DESC 
-LIMIT 1;`
-
 type Repository struct {
 	DB *sqlx.DB
 }
 
-func (ar Repository) GetLongestQueryByID(ctx context.Context, args QueryArgs, queryID string) (PlanRequest, error) {
+const selectQueryPlan = `
+SELECT 	id, 
+   alias,
+   query_fingerprint,
+   queryid,
+   plan,
+   original_plan,
+   query,
+   database,
+   username,
+   cluster,
+   period_start
+FROM plans
+WHERE id = :plan_id;`
+
+func (ar Repository) GetQueryPlan(ctx context.Context, planID string) (PlanEntity, error) {
 	queryArgs := map[string]interface{}{
-		"period_start_from": args.PeriodStartFromSec,
-		"period_start_to":   args.PeriodStartToSec,
-		"query_id":          queryID,
-		"cluster_name":      args.ClusterName,
+		"plan_id": planID,
 	}
-	rows, err := ar.DB.NamedQueryContext(ctx, longestQueryByID, queryArgs)
+	rows, err := ar.DB.NamedQueryContext(ctx, selectQueryPlan, queryArgs)
 	if err != nil {
-		return PlanRequest{}, err
+		return PlanEntity{}, fmt.Errorf("could not NamedQueryContext for selectQueryPlan: %v", err)
 	}
-	longestQueriesDB := make([]PlanRequest, 0)
+
+	planEntities := make([]PlanEntity, 0)
 	for rows.Next() {
-		longestQueryDB := PlanRequest{}
-		if err := rows.StructScan(&longestQueryDB); err != nil {
-			return PlanRequest{}, err
+		planEntity := PlanEntity{}
+		if err := rows.StructScan(&planEntity); err != nil {
+			return PlanEntity{}, fmt.Errorf("could not scan struct PlanEntity: %v", err)
 		}
 
-		longestQueriesDB = append(longestQueriesDB, longestQueryDB)
+		planEntities = append(planEntities, planEntity)
 	}
 
-	if len(longestQueriesDB) == 0 {
-		return PlanRequest{}, fmt.Errorf("query with id: %v, not found", queryID)
+	if len(planEntities) == 0 {
+		return PlanEntity{}, fmt.Errorf("plan with id: %v, not found", planID)
 	}
 
-	return longestQueriesDB[0], nil
+	return planEntities[0], nil
 }
 
 const insertQueryPlan = `
@@ -62,7 +62,6 @@ const insertQueryPlan = `
    original_plan,
    query,
    database,
-   schema,
    username,
    cluster,
    period_start
@@ -76,7 +75,6 @@ VALUES (
 	:original_plan,
 	:query,
 	:database,
-	:schema,
 	:username,
 	:cluster,
 	:period_start
@@ -84,14 +82,12 @@ VALUES (
 `
 
 func (ar Repository) SaveQueryPlan(ctx context.Context, entity PlanEntity) error {
-	stmt, err := ar.DB.PrepareNamed(insertQueryPlan)
+	query, args, err := ar.DB.BindNamed(insertQueryPlan, entity)
 	if err != nil {
-		return fmt.Errorf("failed to prepare statement: %v", err)
+		return fmt.Errorf("could not BindNamed for insertQueryPlan with PlanEntity: %v", err)
 	}
 
-	defer stmt.Close()
-
-	if _, err := stmt.ExecContext(ctx, entity); err != nil {
+	if _, err := ar.DB.ExecContext(ctx, query, args...); err != nil {
 		return fmt.Errorf("could not execute statement: %v", err)
 	}
 

@@ -1,6 +1,9 @@
 package query_explainer
 
-import "time"
+import (
+	"database/sql"
+	"time"
+)
 
 type PlanRequest struct {
 	Query    string `json:"query"`
@@ -9,15 +12,17 @@ type PlanRequest struct {
 }
 
 type PlanEntity struct {
-	Plan             string    `json:"plan"`
-	PlanID           string    `json:"plan_id"`
-	OriginalPlan     string    `json:"original_plan"`
-	Query            string    `json:"query"`
-	QueryID          string    `json:"query_id"`
-	QueryFingerprint string    `json:"query_fingerprint"`
-	ClusterName      string    `json:"cluster_name"`
-	Database         string    `json:"datname"`
-	PeriodStart      time.Time `json:"period_start"`
+	PlanID           string         `json:"id"`
+	Alias            sql.NullString `json:"alias"`
+	Plan             string         `json:"plan"`
+	OriginalPlan     string         `json:"original_plan"`
+	Query            string         `json:"query"`
+	QueryID          sql.NullString `json:"queryid"`
+	QueryFingerprint string         `json:"query_fingerprint"`
+	ClusterName      string         `json:"cluster"`
+	Database         string         `json:"database"`
+	PeriodStart      time.Time      `json:"period_start"`
+	Username         string         `json:"username"`
 }
 
 type QueryArgs struct {

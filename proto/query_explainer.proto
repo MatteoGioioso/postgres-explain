@@ -44,7 +44,9 @@ message GetQueryPlanRequest {
 
 message GetQueryPlanResponse {
   string query_id = 2;
+  string plan_id = 6;
   string query_plan = 1;
   string query_original_plan = 3;
   string query_fingerprint = 5;
+  string query = 7;
 }

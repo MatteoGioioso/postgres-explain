@@ -40,5 +40,8 @@ run: build.backend.core
 run.frontend:
 	(cd web && REACT_APP_MODE=self_hosted REACT_APP_BACKEND_ORIGIN=http://localhost:8082 npm run start)
 
+run.web:
+	(cd web && npm run start)
+
 reload.backend: build.backend.core
 	docker-compose up --build --remove-orphans backend -d
