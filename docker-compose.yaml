@@ -4,11 +4,20 @@ services:
     image: postgres-explain/backend:latest
     restart: on-failure
     build:
-      dockerfile: Dockerfile
+      dockerfile: backend.Dockerfile
       args:
         USER: backend
         GROUP: postgres-explain
       context: backend
+    environment:
+      CLUSTERS: mycluster
+      mycluster_CLUSTER_USERNAME: postgres
+      mycluster_CLUSTER_HOSTNAME: postgres
+      mycluster_postgres_CLUSTER_PASSWORD: postgres
+      CLICKHOUSE_HOST: clickhouse
+      AUTH_TYPE: disabled
+    ports:
+      - "8082:8082"
 
   postgres:
     image: postgres:15
