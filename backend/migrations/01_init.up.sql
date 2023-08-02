@@ -1,6 +1,7 @@
 CREATE TABLE plans
 (
     `id` String COMMENT 'unique plan id',
+    `tracking_id` String COMMENT 'track query plan through changes made for optimization',
     `alias` String COMMENT 'custom alias for the plan',
     `query_fingerprint` LowCardinality(String) COMMENT 'query fingerprint',
     `queryid` LowCardinality(String) COMMENT 'hash of query fingerprint from postgres',

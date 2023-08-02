@@ -4,10 +4,13 @@ import (
 	"context"
 	"fmt"
 	"github.com/jmoiron/sqlx"
+	"github.com/sirupsen/logrus"
+	"postgres-explain/backend/shared"
 )
 
 type Repository struct {
-	DB *sqlx.DB
+	DB  *sqlx.DB
+	Log *logrus.Entry
 }
 
 const selectQueryPlan = `
@@ -21,7 +24,8 @@ SELECT 	id,
    database,
    username,
    cluster,
-   period_start
+   period_start,
+   tracking_id
 FROM plans
 WHERE id = :plan_id;`
 
@@ -64,7 +68,8 @@ const insertQueryPlan = `
    database,
    username,
    cluster,
-   period_start
+   period_start,
+   tracking_id
    )
 VALUES (
     :id,
@@ -77,7 +82,8 @@ VALUES (
 	:database,
 	:username,
 	:cluster,
-	:period_start
+	:period_start,
+    :tracking_id
   )
 `
 
@@ -92,4 +98,43 @@ func (ar Repository) SaveQueryPlan(ctx context.Context, entity PlanEntity) error
 	}
 
 	return nil
+}
+
+const getPlansTmpl = `
+SELECT id, alias, period_start, query, tracking_id 
+FROM plans 
+WHERE cluster = :cluster
+ORDER BY :order_by {{ .OrderDir }} 
+LIMIT :limit
+`
+
+func (ar Repository) GetPlansList(ctx context.Context, request PlansSearchRequest) ([]PlanEntity, error) {
+	query, queryArgs, err := shared.ProcessQueryWithTemplate(request.ToTmplArgs(), request.ToQueryArgs(), getPlansTmpl)
+	if err != nil {
+		return nil, fmt.Errorf("could not ProcessQueryWithTemplate: %v", err)
+	}
+
+	query = ar.DB.Rebind(query)
+
+	ar.Log.Debugf("query: %v, args: %v", query, queryArgs)
+
+	queryCtx, cancel := context.WithTimeout(ctx, shared.QueryTimeout)
+	defer cancel()
+
+	rows, err := ar.DB.QueryxContext(queryCtx, query, queryArgs...)
+	if err != nil {
+		return nil, fmt.Errorf("QueryxContext error: %v", err)
+	}
+	defer rows.Close()
+
+	plans := make([]PlanEntity, 0)
+	for rows.Next() {
+		planEntity := PlanEntity{}
+		if err := rows.StructScan(&planEntity); err != nil {
+			return nil, fmt.Errorf("could not StructScan, PlanEntity: %v", err)
+		}
+		plans = append(plans, planEntity)
+	}
+
+	return plans, nil
 }

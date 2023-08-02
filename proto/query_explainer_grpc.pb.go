@@ -24,6 +24,7 @@ const _ = grpc.SupportPackageIsVersion7
 type QueryExplainerClient interface {
 	SaveQueryPlan(ctx context.Context, in *SaveQueryPlanRequest, opts ...grpc.CallOption) (*SaveQueryPlanResponse, error)
 	GetQueryPlan(ctx context.Context, in *GetQueryPlanRequest, opts ...grpc.CallOption) (*GetQueryPlanResponse, error)
+	GetQueryPlansList(ctx context.Context, in *GetQueryPlansListRequest, opts ...grpc.CallOption) (*GetQueryPlansListResponse, error)
 }
 
 type queryExplainerClient struct {
@@ -52,12 +53,22 @@ func (c *queryExplainerClient) GetQueryPlan(ctx context.Context, in *GetQueryPla
 	return out, nil
 }
 
+func (c *queryExplainerClient) GetQueryPlansList(ctx context.Context, in *GetQueryPlansListRequest, opts ...grpc.CallOption) (*GetQueryPlansListResponse, error) {
+	out := new(GetQueryPlansListResponse)
+	err := c.cc.Invoke(ctx, "/borealis.v1beta1.QueryExplainer/GetQueryPlansList", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // QueryExplainerServer is the server API for QueryExplainer service.
 // All implementations must embed UnimplementedQueryExplainerServer
 // for forward compatibility
 type QueryExplainerServer interface {
 	SaveQueryPlan(context.Context, *SaveQueryPlanRequest) (*SaveQueryPlanResponse, error)
 	GetQueryPlan(context.Context, *GetQueryPlanRequest) (*GetQueryPlanResponse, error)
+	GetQueryPlansList(context.Context, *GetQueryPlansListRequest) (*GetQueryPlansListResponse, error)
 	mustEmbedUnimplementedQueryExplainerServer()
 }
 
@@ -70,6 +81,9 @@ func (UnimplementedQueryExplainerServer) SaveQueryPlan(context.Context, *SaveQue
 }
 func (UnimplementedQueryExplainerServer) GetQueryPlan(context.Context, *GetQueryPlanRequest) (*GetQueryPlanResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetQueryPlan not implemented")
+}
+func (UnimplementedQueryExplainerServer) GetQueryPlansList(context.Context, *GetQueryPlansListRequest) (*GetQueryPlansListResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetQueryPlansList not implemented")
 }
 func (UnimplementedQueryExplainerServer) mustEmbedUnimplementedQueryExplainerServer() {}
 
@@ -120,6 +134,24 @@ func _QueryExplainer_GetQueryPlan_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _QueryExplainer_GetQueryPlansList_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetQueryPlansListRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryExplainerServer).GetQueryPlansList(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/borealis.v1beta1.QueryExplainer/GetQueryPlansList",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryExplainerServer).GetQueryPlansList(ctx, req.(*GetQueryPlansListRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // QueryExplainer_ServiceDesc is the grpc.ServiceDesc for QueryExplainer service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -134,6 +166,10 @@ var QueryExplainer_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetQueryPlan",
 			Handler:    _QueryExplainer_GetQueryPlan_Handler,
+		},
+		{
+			MethodName: "GetQueryPlansList",
+			Handler:    _QueryExplainer_GetQueryPlansList_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

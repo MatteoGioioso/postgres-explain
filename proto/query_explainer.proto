@@ -21,6 +21,13 @@ service QueryExplainer {
       body: "*"
     };
   };
+
+  rpc GetQueryPlansList(GetQueryPlansListRequest) returns (GetQueryPlansListResponse) {
+    option (google.api.http) = {
+      post: "/v0/explain/GetQueryPlansList"
+      body: "*"
+    };
+  };
 }
 
 message SaveQueryPlanRequest {
@@ -49,4 +56,26 @@ message GetQueryPlanResponse {
   string query_original_plan = 3;
   string query_fingerprint = 5;
   string query = 7;
+}
+
+message GetQueryPlansListRequest {
+  google.protobuf.Timestamp period_start_from = 1;
+  google.protobuf.Timestamp period_start_to = 2;
+  string cluster_name = 3;
+  int64 limit = 4;
+  string order = 5;
+  string query_fingerprint = 6;
+  string tracking_id = 7;
+}
+
+message GetQueryPlansListResponse {
+  repeated PlanItem plans = 1;
+}
+
+message PlanItem {
+  string id = 1;
+  string alias = 2;
+  google.protobuf.Timestamp period_start = 3;
+  string query = 4;
+  string tracking_id = 5;
 }

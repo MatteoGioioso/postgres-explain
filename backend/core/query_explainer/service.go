@@ -10,6 +10,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	pg_query "github.com/pganalyze/pg_query_go/v4"
 	"github.com/sirupsen/logrus"
+	"google.golang.org/protobuf/types/known/timestamppb"
 	"postgres-explain/backend/shared"
 	"postgres-explain/core/pkg"
 	"postgres-explain/proto"
@@ -24,10 +25,50 @@ type Service struct {
 	proto.QueryExplainerServer
 }
 
+func (aps *Service) GetQueryPlansList(ctx context.Context, request *proto.GetQueryPlansListRequest) (*proto.GetQueryPlansListResponse, error) {
+	list, err := aps.Repo.GetPlansList(ctx, PlansSearchRequest{
+		PeriodStartFrom:  request.PeriodStartFrom.AsTime(),
+		PeriodStartTo:    request.PeriodStartTo.AsTime(),
+		ClusterName:      request.ClusterName,
+		Limit:            int(request.Limit),
+		Order:            request.Order,
+		QueryFingerprint: request.QueryFingerprint,
+		TrackingId:       request.TrackingId,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("could not GetPlansList: %v", err)
+	}
+
+	items := make([]*proto.PlanItem, 0)
+	for _, entity := range list {
+		items = append(items, &proto.PlanItem{
+			Id:          entity.PlanID,
+			Alias:       entity.Alias.String,
+			PeriodStart: timestamppb.New(entity.PeriodStart),
+			Query:       entity.Query,
+			TrackingId:  entity.TrackingID,
+		})
+	}
+
+	return &proto.GetQueryPlansListResponse{Plans: items}, nil
+}
+
 func (aps *Service) SaveQueryPlan(ctx context.Context, request *proto.SaveQueryPlanRequest) (*proto.SaveQueryPlanResponse, error) {
-	pg := postgresql.PG{CredentialsProvider: aps.credentialsProvider}
-	conn, err := pg.GetConnection(ctx, request.ClusterName, "", postgresql.Options{
+	pg := postgresql.V2{}
+	pgCreds, err := aps.credentialsProvider.GetPostgresCredentials(ctx, request.ClusterName, "", credentials.Options{})
+	if err != nil {
+		return nil, fmt.Errorf("could not GetPostgresCredentials for cluster %v: %v", request.ClusterName, err)
+	}
+	endpoint, err := aps.credentialsProvider.GetClusterEndpoint(ctx, request.ClusterName, "")
+	if err != nil {
+		return nil, fmt.Errorf("could not GetClusterEndpoint for cluster %v: %v", request.ClusterName, err)
+	}
+	conn, err := pg.GetConnection(postgresql.Args{
+		Username: pgCreds.Username,
+		Password: pgCreds.Password,
 		Database: request.Database,
+		Port:     endpoint.Port,
+		Host:     endpoint.Hostname,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("could not get postgres connection pg.GetConnection: %v", err)
@@ -74,6 +115,7 @@ func (aps *Service) SaveQueryPlan(ctx context.Context, request *proto.SaveQueryP
 	planEntity := PlanEntity{
 		Query:            planRequest.Query,
 		PlanID:           uuid.New().String(),
+		TrackingID:       uuid.New().String(),
 		QueryID:          shared.ToSqlNullString(planRequest.QueryID),
 		QueryFingerprint: fingerprint,
 		OriginalPlan:     plan,
@@ -81,6 +123,7 @@ func (aps *Service) SaveQueryPlan(ctx context.Context, request *proto.SaveQueryP
 		Database:         planRequest.Database,
 		Plan:             string(marshalPlan),
 		PeriodStart:      time.Now(),
+		Username:         pgCreds.Username,
 	}
 
 	if err := aps.Repo.SaveQueryPlan(ctx, planEntity); err != nil {

@@ -28,7 +28,7 @@ func (m *Module) Register(log *logrus.Entry, db *sqlx.DB, credentialsProvider cr
 }
 
 func (m *Module) Init(ctx context.Context, grpcServer *grpc.Server, mux *runtime.ServeMux, address string, opts []grpc.DialOption) error {
-	repository := Repository{DB: m.DB}
+	repository := Repository{DB: m.DB, Log: m.Log}
 	service := Service{
 		log:                 m.Log,
 		Repo:                repository,
