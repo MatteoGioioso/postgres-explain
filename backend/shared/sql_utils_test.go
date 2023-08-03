@@ -56,3 +56,47 @@ LIMIT :limit
 		})
 	}
 }
+
+func TestConvertQueryWithParams(t *testing.T) {
+	type args struct {
+		query  string
+		params []interface{}
+	}
+	tests := []struct {
+		name string
+		args args
+		want string
+	}{
+		{
+			name: "query with number",
+			args: args{
+				query:  "SELECT abalance FROM pgbench_accounts WHERE aid = $1",
+				params: []interface{}{3},
+			},
+			want: "SELECT abalance FROM pgbench_accounts WHERE aid = 3",
+		},
+		{
+			name: "query with string",
+			args: args{
+				query:  "SELECT abalance FROM pgbench_accounts WHERE aid = $1",
+				params: []interface{}{"hello"},
+			},
+			want: "SELECT abalance FROM pgbench_accounts WHERE aid = 'hello'",
+		},
+		{
+			name: "query with boolean",
+			args: args{
+				query:  "SELECT abalance FROM pgbench_accounts WHERE aid = $1",
+				params: []interface{}{true},
+			},
+			want: "SELECT abalance FROM pgbench_accounts WHERE aid = true",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := ConvertQueryWithParams(tt.args.query, tt.args.params); got != tt.want {
+				t.Errorf("ConvertQueryWithParams() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

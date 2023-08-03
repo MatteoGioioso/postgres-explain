@@ -6,9 +6,18 @@ import (
 )
 
 type PlanRequest struct {
-	Query    string `json:"query"`
-	QueryID  string `json:"query_id"`
-	Database string `json:"datname"`
+	Query      string        `json:"query"`
+	QueryID    string        `json:"query_id"`
+	Database   string        `json:"datname"`
+	Parameters []interface{} `json:"parameters"`
+}
+
+func (p *PlanRequest) paramsFromRequest(params []string) {
+	s := make([]interface{}, 0)
+	for _, v := range params {
+		s = append(s, v)
+	}
+	p.Parameters = s
 }
 
 type PlanEntity struct {

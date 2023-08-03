@@ -39,6 +39,7 @@ message SaveQueryPlanRequest {
   string query = 7;
   string database = 5;
   string namespace = 6;
+  repeated string parameters = 8;
 }
 
 message SaveQueryPlanResponse {

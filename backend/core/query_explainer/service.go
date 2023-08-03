@@ -73,18 +73,19 @@ func (aps *Service) SaveQueryPlan(ctx context.Context, request *proto.SaveQueryP
 	if err != nil {
 		return nil, fmt.Errorf("could not get postgres connection pg.GetConnection: %v", err)
 	}
+	defer conn.Close()
 
-	planRequest := PlanRequest{}
-
-	// Custom query
-	if request.QueryId == "" {
-		planRequest.Query = request.Query
-		planRequest.Database = request.Database
-	} else {
-		planRequest.QueryID = request.QueryId
-		// Get query from the pg_stats_statements
-		// planRequest.Query =
-		// planRequest.Database =
+	planRequest := PlanRequest{
+		Query:    request.Query,
+		QueryID:  request.QueryId,
+		Database: request.Database,
+	}
+	if len(request.Parameters) > 0 {
+		planRequest.paramsFromRequest(request.Parameters)
+		planRequest.Query, err = shared.ConvertQueryWithParams(planRequest.Query, planRequest.Parameters)
+		if err != nil {
+			return nil, fmt.Errorf("could not ConvertQueryWithParams: %v", err)
+		}
 	}
 
 	plan, err := aps.runExplain(ctx, conn, planRequest)
@@ -161,6 +162,8 @@ func (aps *Service) runExplain(
 		return "", fmt.Errorf("could not run transaction: %v", err)
 	}
 	defer tx.Rollback()
+
+	aps.log.Debugf("explaining: %v", query.Query)
 
 	rows, err := tx.Query(fmt.Sprintf("EXPLAIN (ANALYZE, COSTS, VERBOSE, BUFFERS, FORMAT JSON) %v", query.Query))
 	if err != nil {

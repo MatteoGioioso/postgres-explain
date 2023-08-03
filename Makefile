@@ -18,7 +18,7 @@ gen.proto:
         ${PROTO_DIR}/*.proto
 	protoc \
 		--grpc-gateway-ts_out=loglevel=debug,use_proto_names=true:${FRONTEND_DIR} \
-		--proto_path=${PROTO_DIR} ${PROTO_DIR}/query_explainer.proto ${PROTO_DIR}/info.proto
+		--proto_path=${PROTO_DIR} ${PROTO_DIR}/query_explainer.proto ${PROTO_DIR}/info.proto ${PROTO_DIR}/analytics.proto
 
 gen.types:
 	cd core && make generate-types
@@ -28,6 +28,10 @@ gen.wasm: gen.types
 
 gen.core:
 	./core.sh
+
+gen.sanitize:
+	curl -o backend/shared/sanitize.go https://raw.githubusercontent.com/jackc/pgx/master/internal/sanitize/sanitize.go
+	sed -i 's/package sanitize/package shared/' backend/shared/sanitize.go
 
 build.backend:
 	(cd backend/ && go mod tidy -modfile=$(GOMODFILE) && GOOS=linux GOARCH=amd64 go build -modfile=$(GOMODFILE) -o bin/backend .)

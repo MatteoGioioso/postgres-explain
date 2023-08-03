@@ -1,0 +1,52 @@
+syntax = "proto3";
+
+package borealis.v1beta1;
+
+option go_package = "/proto";
+
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+
+service QueryAnalytics {
+  rpc GetQueriesList(GetQueriesListRequest) returns (GetQueriesListResponse) {
+    option (google.api.http) = {
+      post: "/v0/analytics/GetQueriesMetrics"
+      body: "*"
+    };
+  };
+}
+
+message GetQueriesListRequest {
+  google.protobuf.Timestamp period_start_from = 1;
+  google.protobuf.Timestamp period_start_to = 2;
+
+  string cluster_name = 3;
+  string order = 4;
+  int64 limit = 5;
+}
+
+message GetQueriesListResponse {
+  repeated Query queries = 1;
+  repeated MetricInfo mappings = 5;
+}
+
+message Query {
+  string id = 1;
+  string fingerprint = 2;
+  string text = 3;
+  repeated string parameters = 4;
+  repeated string plan_ids = 6;
+  repeated MetricValues metrics = 5;
+}
+
+// MetricValues is statistics of specific metric.
+message MetricValues {
+  float value = 1;
+}
+
+message MetricInfo {
+  string key = 1;
+  string Type = 2;
+  string Kind = 3;
+  string Title = 5;
+}

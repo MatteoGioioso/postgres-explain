@@ -54,3 +54,7 @@ var FuncMap = template.FuncMap{
 	"inc":         func(i int) int { return i + 1 },
 	"StringsJoin": strings.Join,
 }
+
+func ConvertQueryWithParams(query string, params []interface{}) (string, error) {
+	return SanitizeSQL(query, params...)
+}
