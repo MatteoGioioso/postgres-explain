@@ -20,10 +20,14 @@ message GetClustersRequest {
 }
 
 message GetClustersResponse {
-  repeated Clusters clusters = 1;
+  repeated Cluster clusters = 1;
 }
 
-message Clusters {
+message Cluster {
   string id = 2;
   string name = 1;
+  string hostname = 3;
+  string port = 4;
+  string status = 5;
+  string status_error = 6;
 }

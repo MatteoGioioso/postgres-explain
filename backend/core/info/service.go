@@ -11,7 +11,7 @@ type Service struct {
 	log                 *logrus.Entry
 	Repo                Repository
 	credentialsProvider credentials.Credentials
-	proto.QueryExplainerServer
+	proto.InfoServer
 }
 
 func (aps *Service) GetClusters(ctx context.Context, in *proto.GetClustersRequest) (*proto.GetClustersResponse, error) {
@@ -20,18 +20,6 @@ func (aps *Service) GetClusters(ctx context.Context, in *proto.GetClustersReques
 		return nil, err
 	}
 	return &proto.GetClustersResponse{
-		Clusters: toClusters(clusters),
+		Clusters: clusters,
 	}, nil
-}
-
-func toClusters(clusters []Cluster) []*proto.Clusters {
-	cls := make([]*proto.Clusters, 0)
-	for _, cluster := range clusters {
-		cls = append(cls, &proto.Clusters{
-			Id:   cluster.ID,
-			Name: cluster.Name,
-		})
-	}
-
-	return cls
 }

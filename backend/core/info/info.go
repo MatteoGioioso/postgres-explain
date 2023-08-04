@@ -21,22 +21,25 @@ type Module struct {
 }
 
 func (m *Module) Register(log *logrus.Entry, db *sqlx.DB, credentialsProvider credentials.Credentials, params modules.Params) {
-	m.Log = log
+	m.Log = log.WithField("module", ModuleName)
 	m.DB = db
 	m.CredentialsProvider = credentialsProvider
+	m.Log.Infof("registered")
 }
 
 func (m *Module) Init(ctx context.Context, grpcServer *grpc.Server, mux *runtime.ServeMux, address string, opts []grpc.DialOption) error {
-	repository := Repository{DB: m.DB}
+	repository := Repository{credentialsProvider: m.CredentialsProvider, log: m.Log}
 	service := Service{
-		log:                 m.Log.WithField("module", ModuleName),
+		log:                 m.Log,
 		Repo:                repository,
 		credentialsProvider: m.CredentialsProvider,
 	}
 
-	proto.RegisterQueryExplainerServer(grpcServer, &service)
+	proto.RegisterInfoServer(grpcServer, &service)
 	if err := proto.RegisterInfoHandlerFromEndpoint(ctx, mux, address, opts); err != nil {
 		return fmt.Errorf("could not register InfoHandlerFromEndpoint: %v", err)
 	}
+	m.Log.Infof("initialized")
+
 	return nil
 }

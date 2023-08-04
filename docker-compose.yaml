@@ -10,7 +10,7 @@ services:
         GROUP: postgres-explain
       context: backend
     environment:
-      CLUSTERS: mycluster
+      CLUSTERS: mycluster,another
       mycluster_CLUSTER_USERNAME: postgres
       mycluster_CLUSTER_HOSTNAME: postgres
       mycluster_postgres_CLUSTER_PASSWORD: postgres

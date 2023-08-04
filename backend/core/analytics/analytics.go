@@ -42,6 +42,6 @@ func (m *Module) Init(ctx context.Context, grpcServer *grpc.Server, mux *runtime
 	if err := proto.RegisterQueryAnalyticsHandlerFromEndpoint(ctx, mux, address, opts); err != nil {
 		return fmt.Errorf("could not register QueryExplainerHandlerFromEndpoint: %v", err)
 	}
-	m.Log.Infof("initiated")
+	m.Log.Infof("initialized")
 	return nil
 }
