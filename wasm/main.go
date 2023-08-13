@@ -11,6 +11,7 @@ import (
 func main() {
 	fmt.Println("Starting explain WASM")
 	js.Global().Set("explain", explain())
+	js.Global().Set("compare", compare())
 	<-make(chan bool)
 }
 
@@ -53,13 +54,21 @@ func explain() js.Func {
 
 		stats := statsGather.ComputeStats(node)
 		indexesStats := statsGather.ComputeIndexesStats(node)
+		tablesStats := statsGather.ComputeTablesStats(node)
+		nodesStats := statsGather.ComputeNodesStats(node)
+		jitStats := statsGather.ComputeJITStats()
+		triggersStats := statsGather.ComputeTriggersStats()
 
 		summary := pkg.NewSummary().Do(node, stats)
 
 		explained := pkg.Explained{
-			Summary:      summary,
-			Stats:        stats,
-			IndexesStats: indexesStats,
+			Summary:       summary,
+			Stats:         stats,
+			IndexesStats:  indexesStats,
+			TablesStats:   tablesStats,
+			NodesStats:    nodesStats,
+			JITStats:      jitStats,
+			TriggersStats: triggersStats,
 		}
 
 		marshalledExplained, err := json.Marshal(explained)
@@ -73,6 +82,65 @@ func explain() js.Func {
 		return map[string]any{
 			"explained": string(marshalledExplained),
 			"error":     nil,
+		}
+	})
+}
+
+func compare() js.Func {
+	return js.FuncOf(func(this js.Value, args []js.Value) (ret any) {
+		defer func() {
+			if r := recover(); r != nil {
+				ret = map[string]any{
+					"error":         "plans comparison panic",
+					"error_details": fmt.Errorf("%s", r).Error(),
+					"error_stack":   string(debug.Stack()),
+				}
+			}
+		}()
+
+		if len(args) != 2 {
+			return map[string]any{
+				"error": "invalid no of arguments passed",
+			}
+		}
+
+		planPrevFromArgs := args[0].String()
+		planOptimizedFromArgs := args[1].String()
+		planPrev := pkg.Explained{}
+		planOptimized := pkg.Explained{}
+		if err := json.Unmarshal([]byte(planPrevFromArgs), &planPrev); err != nil {
+			return map[string]any{
+				"error":         "could not unmarshal planPrev",
+				"error_details": err.Error(),
+			}
+		}
+		if err := json.Unmarshal([]byte(planOptimizedFromArgs), &planOptimized); err != nil {
+			return map[string]any{
+				"error":         "could not unmarshal planOptimized",
+				"error_details": err.Error(),
+			}
+		}
+
+		comparator := pkg.NewComparator(planPrev, planOptimized)
+		comparison, err := comparator.Compare()
+		if err != nil {
+			return map[string]any{
+				"error":         "could not compare plans",
+				"error_details": err.Error(),
+			}
+		}
+
+		marshalledExplained, err := json.Marshal(comparison)
+		if err != nil {
+			return map[string]any{
+				"error":         "could not marshal comparison",
+				"error_details": err.Error(),
+			}
+		}
+
+		return map[string]any{
+			"comparison": string(marshalledExplained),
+			"error":      nil,
 		}
 	})
 }
