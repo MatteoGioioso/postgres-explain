@@ -107,50 +107,60 @@ func compare() js.Func {
 		defer func() {
 			if r := recover(); r != nil {
 				ret = map[string]any{
-					"error":         "plans comparison panic",
-					"error_details": fmt.Errorf("%s", r).Error(),
-					"error_stack":   string(debug.Stack()),
+					"error": marshalError(pkg.ExplainedError{
+						Error:   "plan comparison panic",
+						Details: fmt.Errorf("%s", r).Error(),
+						Stack:   string(debug.Stack()),
+					}),
 				}
 			}
 		}()
 
 		if len(args) != 2 {
 			return map[string]any{
-				"error": "invalid no of arguments passed",
+				"error": pkg.ExplainedError{Error: "invalid no of arguments passed"},
 			}
 		}
 
-		planPrevFromArgs := args[0].String()
-		planOptimizedFromArgs := args[1].String()
-		planPrev := pkg.Explained{}
-		planOptimized := pkg.Explained{}
-		if err := json.Unmarshal([]byte(planPrevFromArgs), &planPrev); err != nil {
+		planFromArgs := args[0].String()
+		planToCompareFromArgs := args[1].String()
+		plan := pkg.ExplainedComparison{}
+		planToCompare := pkg.ExplainedComparison{}
+		if err := json.Unmarshal([]byte(planFromArgs), &plan); err != nil {
 			return map[string]any{
-				"error":         "could not unmarshal planPrev",
-				"error_details": err.Error(),
+				"error": marshalError(pkg.ExplainedError{
+					Error:   "could not get plan",
+					Details: err.Error(),
+				}),
 			}
 		}
-		if err := json.Unmarshal([]byte(planOptimizedFromArgs), &planOptimized); err != nil {
+		if err := json.Unmarshal([]byte(planToCompareFromArgs), &planToCompare); err != nil {
 			return map[string]any{
-				"error":         "could not unmarshal planOptimized",
-				"error_details": err.Error(),
+				"error": marshalError(pkg.ExplainedError{
+					Error:   "could not get plan to compare",
+					Details: err.Error(),
+				}),
 			}
 		}
 
-		comparator := pkg.NewComparator(planPrev, planOptimized)
+		comparator := pkg.NewComparator(plan, planToCompare)
 		comparison, err := comparator.Compare()
 		if err != nil {
 			return map[string]any{
-				"error":         "could not compare plans",
-				"error_details": err.Error(),
+				"error": marshalError(pkg.ExplainedError{
+					Error:   "could compare plans",
+					Details: err.Error(),
+				}),
 			}
 		}
 
 		marshalledExplained, err := json.Marshal(comparison)
 		if err != nil {
 			return map[string]any{
-				"error":         "could not marshal comparison",
-				"error_details": err.Error(),
+				"error": marshalError(pkg.ExplainedError{
+					Error:   "could not marshal comparison",
+					Details: err.Error(),
+				}),
 			}
 		}
 
