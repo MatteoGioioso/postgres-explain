@@ -12,6 +12,7 @@ func main() {
 	fmt.Println("Starting explain WASM")
 	js.Global().Set("explain", explain())
 	js.Global().Set("compare", compare())
+	js.Global().Set("compareNodes", compareNodes())
 	<-make(chan bool)
 }
 
@@ -102,6 +103,75 @@ func explain() js.Func {
 	})
 }
 
+func compareNodes() js.Func {
+	return js.FuncOf(func(this js.Value, args []js.Value) (ret any) {
+		defer func() {
+			if r := recover(); r != nil {
+				ret = map[string]any{
+					"error": marshalError(pkg.ExplainedError{
+						Error:   "node comparison panic",
+						Details: fmt.Errorf("%s", r).Error(),
+						Stack:   string(debug.Stack()),
+					}),
+				}
+			}
+		}()
+
+		if len(args) != 2 {
+			return map[string]any{
+				"error": pkg.ExplainedError{Error: "invalid no of arguments passed"},
+			}
+		}
+
+		nodeFromArgs := args[0].String()
+		nodeToCompareFromArgs := args[1].String()
+		node := pkg.PlanRow{}
+		nodeToCompare := pkg.PlanRow{}
+		if err := json.Unmarshal([]byte(nodeFromArgs), &node); err != nil {
+			return map[string]any{
+				"error": marshalError(pkg.ExplainedError{
+					Error:   "could not get node",
+					Details: err.Error(),
+				}),
+			}
+		}
+		if err := json.Unmarshal([]byte(nodeToCompareFromArgs), &nodeToCompare); err != nil {
+			return map[string]any{
+				"error": marshalError(pkg.ExplainedError{
+					Error:   "could not get node to compare",
+					Details: err.Error(),
+				}),
+			}
+		}
+
+		comparator := pkg.NewNodeComparator(node, nodeToCompare)
+		comparison, err := comparator.Compare()
+		if err != nil {
+			return map[string]any{
+				"error": marshalError(pkg.ExplainedError{
+					Error:   "could compare nodes",
+					Details: err.Error(),
+				}),
+			}
+		}
+
+		marshalledComparison, err := json.Marshal(comparison)
+		if err != nil {
+			return map[string]any{
+				"error": marshalError(pkg.ExplainedError{
+					Error:   "could not marshal comparison",
+					Details: err.Error(),
+				}),
+			}
+		}
+
+		return map[string]any{
+			"comparison": string(marshalledComparison),
+			"error":      nil,
+		}
+	})
+}
+
 func compare() js.Func {
 	return js.FuncOf(func(this js.Value, args []js.Value) (ret any) {
 		defer func() {
@@ -154,7 +224,7 @@ func compare() js.Func {
 			}
 		}
 
-		marshalledExplained, err := json.Marshal(comparison)
+		marshalledComparison, err := json.Marshal(comparison)
 		if err != nil {
 			return map[string]any{
 				"error": marshalError(pkg.ExplainedError{
@@ -165,7 +235,7 @@ func compare() js.Func {
 		}
 
 		return map[string]any{
-			"comparison": string(marshalledExplained),
+			"comparison": string(marshalledComparison),
 			"error":      nil,
 		}
 	})
