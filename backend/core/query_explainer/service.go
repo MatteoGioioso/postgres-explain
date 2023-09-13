@@ -8,9 +8,12 @@ import (
 	"github.com/borealisdb/commons/postgresql"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
+	"github.com/matoous/go-nanoid/v2"
 	pg_query "github.com/pganalyze/pg_query_go/v4"
 	"github.com/sirupsen/logrus"
+	"google.golang.org/grpc/peer"
 	"google.golang.org/protobuf/types/known/timestamppb"
+	"net"
 	"postgres-explain/backend/shared"
 	"postgres-explain/core/pkg"
 	"postgres-explain/proto"
@@ -54,6 +57,9 @@ func (aps *Service) GetQueryPlansList(ctx context.Context, request *proto.GetQue
 }
 
 func (aps *Service) SaveQueryPlan(ctx context.Context, request *proto.SaveQueryPlanRequest) (*proto.SaveQueryPlanResponse, error) {
+	p, _ := peer.FromContext(ctx)
+	host, s, err2 := net.SplitHostPort(p.Addr.String())
+	aps.log.Infof("======================================> %v, %v, %v", host, s, err2)
 	pg := postgresql.V2{}
 	pgCreds, err := aps.credentialsProvider.GetPostgresCredentials(ctx, request.ClusterName, "", credentials.Options{})
 	if err != nil {
@@ -113,9 +119,15 @@ func (aps *Service) SaveQueryPlan(ctx context.Context, request *proto.SaveQueryP
 		return nil, fmt.Errorf("could not calculate query Fingerprint %v", err)
 	}
 
+	planId, err := gonanoid.New(11)
+	if err != nil {
+		return nil, fmt.Errorf("could not generate nano id: %v", err)
+	}
+
 	planEntity := PlanEntity{
+		Alias:            shared.ToSqlNullString(request.Alias),
 		Query:            planRequest.Query,
-		PlanID:           uuid.New().String(),
+		PlanID:           planId,
 		TrackingID:       uuid.New().String(),
 		QueryID:          shared.ToSqlNullString(planRequest.QueryID),
 		QueryFingerprint: fingerprint,
@@ -125,6 +137,12 @@ func (aps *Service) SaveQueryPlan(ctx context.Context, request *proto.SaveQueryP
 		Plan:             string(marshalPlan),
 		PeriodStart:      time.Now(),
 		Username:         pgCreds.Username,
+	}
+
+	if request.OptimizationId == "" {
+		planEntity.OptimizationId = planId
+	} else {
+		planEntity.OptimizationId = request.OptimizationId
 	}
 
 	if err := aps.Repo.SaveQueryPlan(ctx, planEntity); err != nil {
@@ -147,6 +165,7 @@ func (aps *Service) GetQueryPlan(ctx context.Context, request *proto.GetQueryPla
 		QueryOriginalPlan: plan.OriginalPlan,
 		QueryFingerprint:  plan.QueryFingerprint,
 		Query:             plan.Query,
+		PeriodStart:       timestamppb.New(plan.PeriodStart),
 	}, err
 }
 
@@ -206,11 +225,19 @@ func (aps *Service) processPlan(plan string) (pkg.Explained, error) {
 
 	stats := statsGather.ComputeStats(node)
 	indexesStats := statsGather.ComputeIndexesStats(node)
+	nodesStats := statsGather.ComputeNodesStats(node)
+	tablesStats := statsGather.ComputeTablesStats(node)
+	jitStats := statsGather.ComputeJITStats()
+	triggersStats := statsGather.ComputeTriggersStats()
 	summary := pkg.NewSummary().Do(node, stats)
 
 	return pkg.Explained{
-		Summary:      summary,
-		Stats:        stats,
-		IndexesStats: indexesStats,
+		Summary:       summary,
+		Stats:         stats,
+		IndexesStats:  indexesStats,
+		TablesStats:   tablesStats,
+		NodesStats:    nodesStats,
+		JITStats:      jitStats,
+		TriggersStats: triggersStats,
 	}, nil
 }

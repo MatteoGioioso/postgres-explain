@@ -13,7 +13,8 @@ CREATE TABLE plans
     `username` LowCardinality(String) COMMENT 'client user name',
     `cluster` LowCardinality(String) COMMENT 'Cluster name',
     `period_start`  DateTime COMMENT 'Time when collection of bucket started',
-    `period_length` UInt32 COMMENT 'Duration of collection bucket'
+    `period_length` UInt32 COMMENT 'Duration of collection bucket',
+    `optimization_id` String COMMENT 'for tracking optimizations'
 ) ENGINE = MergeTree PARTITION BY toYYYYMMDD(period_start)
       ORDER BY
           (

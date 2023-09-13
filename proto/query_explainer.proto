@@ -39,6 +39,8 @@ message SaveQueryPlanRequest {
   string query = 7;
   string database = 5;
   string namespace = 6;
+  string optimization_id = 9;
+  string alias = 10;
   repeated string parameters = 8;
 }
 
@@ -57,6 +59,8 @@ message GetQueryPlanResponse {
   string query_original_plan = 3;
   string query_fingerprint = 5;
   string query = 7;
+  google.protobuf.Timestamp period_start = 8;
+  string alias = 9;
 }
 
 message GetQueryPlansListRequest {

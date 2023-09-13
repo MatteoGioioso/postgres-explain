@@ -33,6 +33,6 @@ do
 done
 
 sleep 5
-pgbench -i -s 1 postgres
+pgbench -i -s 10 postgres
 sleep 10
 pgbench -c 8 -T 3600 -s 5 -b select-only postgres

@@ -16,7 +16,7 @@ type QueriesMetricsRequest struct {
 
 func (e QueriesMetricsRequest) GetQueryArgs() map[string]interface{} {
 	if e.Limit == 0 {
-		e.Limit = 10
+		e.Limit = 100
 	}
 	return map[string]interface{}{
 		"limit": e.Limit,

@@ -8,6 +8,7 @@ import (
 	pg_query "github.com/pganalyze/pg_query_go/v4"
 	"github.com/sirupsen/logrus"
 	"math"
+	"postgres-explain/backend/shared"
 	"postgres-explain/proto"
 	"strconv"
 )
@@ -49,7 +50,7 @@ func (s Service) GetQueriesList(ctx context.Context, request *proto.GetQueriesLi
 			Id:          strconv.FormatInt(metrics["queryid"].(int64), 10),
 			Fingerprint: fingerprint,
 			Text:        queryText,
-			Parameters:  nil,
+			Parameters:  shared.QueryParameterPlaceholder.FindAllString(queryText, -1),
 			PlanIds:     nil,
 			Metrics:     mts,
 		})

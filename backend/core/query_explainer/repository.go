@@ -69,7 +69,8 @@ const insertQueryPlan = `
    username,
    cluster,
    period_start,
-   tracking_id
+   tracking_id,
+   optimization_id
    )
 VALUES (
     :id,
@@ -83,7 +84,8 @@ VALUES (
 	:username,
 	:cluster,
 	:period_start,
-    :tracking_id
+    :tracking_id,
+	:optimization_id
   )
 `
 

@@ -23,8 +23,9 @@ func (p *PlanRequest) paramsFromRequest(params []string) {
 type PlanEntity struct {
 	PlanID           string         `json:"id"`
 	TrackingID       string         `json:"tracking_id"`
+	OptimizationId   string         `json:"optimization_id"`
 	Alias            sql.NullString `json:"alias"`
-	Plan             string         `json:"plan"`
+	Plan             string         `json:"plan"` // Explained object
 	OriginalPlan     string         `json:"original_plan"`
 	Query            string         `json:"query"`
 	QueryID          sql.NullString `json:"queryid"`

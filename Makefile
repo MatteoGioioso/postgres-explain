@@ -36,6 +36,9 @@ gen.sanitize:
 build.backend:
 	(cd backend/ && go mod tidy -modfile=$(GOMODFILE) && GOOS=linux GOARCH=amd64 go build -modfile=$(GOMODFILE) -o bin/backend .)
 
+build.collector:
+	(cd collector/ && go mod tidy -modfile=$(GOMODFILE) && GOOS=linux GOARCH=amd64 go build -modfile=$(GOMODFILE) -o bin/collector .)
+
 build.backend.core: gen.core build.backend
 
 run: build.backend.core

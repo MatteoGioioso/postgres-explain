@@ -18,6 +18,7 @@ require (
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.16.1
 	github.com/jmoiron/sqlx v1.3.5
+	github.com/matoous/go-nanoid/v2 v2.0.0
 	github.com/pganalyze/pg_query_go/v4 v4.2.1
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.9.3

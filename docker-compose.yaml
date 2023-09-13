@@ -12,7 +12,7 @@ services:
     environment:
       CLUSTERS: mycluster,another
       mycluster_CLUSTER_USERNAME: postgres
-      mycluster_CLUSTER_HOSTNAME: postgres
+      mycluster_CLUSTER_HOSTNAME: postgres_one
       mycluster_postgres_CLUSTER_PASSWORD: postgres
       CLICKHOUSE_HOST: clickhouse
       AUTH_TYPE: disabled
@@ -20,13 +20,13 @@ services:
     ports:
       - "8082:8082"
 
-  postgres:
+  postgres_one:
     image: postgres:15
-    hostname: postgres
-    command: -c shared_preload_libraries='pg_stat_statements,auto_explain'
+    hostname: postgres_one
+    command: -c shared_preload_libraries='pg_stat_statements,auto_explain' -c auto_explain.sample_rate=1 -c auto_explain.log_min_duration=10 -c auto_explain.log_analyze=true -c auto_explain.log_timing=true -c auto_explain.log_buffers=true -c auto_explain.log_verbose=true -c auto_explain.log_triggers=true -c auto_explain.log_settings=true -c auto_explain.log_nested_statements=true -c auto_explain.log_format=JSON
     ports:
       - "5432:5432"
-    container_name: postgres
+    container_name: postgres_one
     environment:
       POSTGRES_PASSWORD: postgres
       POSTGRES_USER: postgres
@@ -51,7 +51,7 @@ services:
       dockerfile: pgbench.Dockerfile
       context: pg_bench
     restart: always # Run continuously
-    command: postgres
+    command: postgres_one
     environment:
       PGUSER: postgres
       PGPASSWORD: postgres
