@@ -7,3 +7,6 @@
 [submodule "web"]
 	path = web
 	url = git@github.com:MatteoGioioso/postgres-explain-web.git
+[submodule "collector"]
+	path = collector
+	url = git@github.com:MatteoGioioso/postgres-collector.git
