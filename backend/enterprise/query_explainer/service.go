@@ -4,10 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/borealisdb/commons/credentials"
-	"github.com/borealisdb/commons/postgresql"
 	"github.com/google/uuid"
-	"github.com/jmoiron/sqlx"
 	"github.com/matoous/go-nanoid/v2"
 	pg_query "github.com/pganalyze/pg_query_go/v4"
 	"github.com/sirupsen/logrus"
@@ -15,14 +12,14 @@ import (
 	"postgres-explain/backend/shared"
 	"postgres-explain/core/pkg"
 	"postgres-explain/proto"
-	"strings"
 	"time"
 )
 
 type Service struct {
-	log                 *logrus.Entry
-	Repo                Repository
-	credentialsProvider credentials.Credentials
+	log            *logrus.Entry
+	Repo           Repository
+	CommandsClient CommandsClient
+
 	proto.QueryExplainerServer
 }
 
@@ -55,48 +52,28 @@ func (aps *Service) GetQueryPlansList(ctx context.Context, request *proto.GetQue
 }
 
 func (aps *Service) SaveQueryPlan(ctx context.Context, request *proto.SaveQueryPlanRequest) (*proto.SaveQueryPlanResponse, error) {
-	pg := postgresql.V2{}
-	pgCreds, err := aps.credentialsProvider.GetPostgresCredentials(ctx, request.ClusterName, "", credentials.Options{})
-	if err != nil {
-		return nil, fmt.Errorf("could not GetPostgresCredentials for cluster %v: %v", request.ClusterName, err)
+	planRequest := &proto.PlanRequest{
+		Query:        request.Query,
+		QueryId:      request.QueryId,
+		Database:     request.Database,
+		InstanceName: request.InstanceName,
 	}
-	endpoint, err := aps.credentialsProvider.GetClusterEndpoint(ctx, request.ClusterName, "")
-	if err != nil {
-		return nil, fmt.Errorf("could not GetClusterEndpoint for cluster %v: %v", request.ClusterName, err)
-	}
-	conn, err := pg.GetConnection(postgresql.Args{
-		Username: pgCreds.Username,
-		Password: pgCreds.Password,
-		Database: request.Database,
-		Port:     endpoint.Port,
-		Host:     endpoint.Hostname,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("could not get postgres connection pg.GetConnection: %v", err)
-	}
-	defer conn.Close()
 
-	planRequest := PlanRequest{
-		Query:    request.Query,
-		QueryID:  request.QueryId,
-		Database: request.Database,
-	}
 	if len(request.Parameters) > 0 {
-		planRequest.paramsFromRequest(request.Parameters)
-		planRequest.Query, err = shared.ConvertQueryWithParams(planRequest.Query, planRequest.Parameters)
+		var err error
+		planRequest.Parameters = request.Parameters
+		planRequest.Query, err = shared.ConvertQueryWithParams(planRequest.Query, paramsFromRequest(planRequest.Parameters))
 		if err != nil {
 			return nil, fmt.Errorf("could not ConvertQueryWithParams: %v", err)
 		}
 	}
 
-	plan, err := aps.runExplain(ctx, conn, planRequest)
+	plan, err := aps.CommandsClient.Explain(ctx, request.ClusterName, request.InstanceName, planRequest)
 	if err != nil {
 		return nil, fmt.Errorf("could not run explain: %v", err)
 	}
 
-	aps.log.Debugf("found plan for query %v: \n %v", planRequest.Query, plan)
-
-	enrichedPlan, err := aps.processPlan(plan)
+	enrichedPlan, err := aps.processPlan(plan.Plan)
 	if err != nil {
 		return nil, fmt.Errorf("could not enrich plan: %v", err)
 	}
@@ -124,14 +101,14 @@ func (aps *Service) SaveQueryPlan(ctx context.Context, request *proto.SaveQueryP
 		Query:            planRequest.Query,
 		PlanID:           planId,
 		TrackingID:       uuid.New().String(),
-		QueryID:          shared.ToSqlNullString(planRequest.QueryID),
+		QueryID:          shared.ToSqlNullString(planRequest.QueryId),
 		QueryFingerprint: fingerprint,
-		OriginalPlan:     plan,
-		ClusterName:      request.ClusterName,
+		OriginalPlan:     plan.Plan,
+		ClusterName:      "",
 		Database:         planRequest.Database,
 		Plan:             string(marshalPlan),
 		PeriodStart:      time.Now(),
-		Username:         pgCreds.Username,
+		Username:         "",
 	}
 
 	if request.OptimizationId == "" {
@@ -164,47 +141,6 @@ func (aps *Service) GetQueryPlan(ctx context.Context, request *proto.GetQueryPla
 	}, err
 }
 
-func (aps *Service) runExplain(
-	ctx context.Context,
-	conn *sqlx.DB,
-	query PlanRequest,
-) (string, error) {
-	defer conn.Close()
-
-	tx, err := conn.BeginTx(ctx, nil)
-	if err != nil {
-		return "", fmt.Errorf("could not run transaction: %v", err)
-	}
-	defer tx.Rollback()
-
-	aps.log.Debugf("explaining: %v", query.Query)
-
-	rows, err := tx.Query(fmt.Sprintf("EXPLAIN (ANALYZE, COSTS, VERBOSE, BUFFERS, FORMAT JSON) %v", query.Query))
-	if err != nil {
-		return "", fmt.Errorf("could not run EXPLAIN query: %v", err)
-	}
-
-	var sb strings.Builder
-
-	for rows.Next() {
-		var s string
-		if err := rows.Scan(&s); err != nil {
-			return "", fmt.Errorf("could not scan row: %v", err)
-		}
-		sb.WriteString(s)
-		sb.WriteString("\n")
-	}
-
-	// In case of UPDATE, DELETE or INSERT we don't want to persist the changes
-	if err := tx.Rollback(); err != nil {
-		return "", fmt.Errorf("could not roll back transaction: %v", err)
-	}
-
-	aps.log.Debugf("found plan %v for query %v", sb.String(), query.Query)
-
-	return sb.String(), nil
-}
-
 func (aps *Service) processPlan(plan string) (pkg.Explained, error) {
 	node, err := pkg.GetRootNodeFromPlans(plan)
 	if err != nil {
@@ -235,4 +171,13 @@ func (aps *Service) processPlan(plan string) (pkg.Explained, error) {
 		JITStats:      jitStats,
 		TriggersStats: triggersStats,
 	}, nil
+}
+
+func paramsFromRequest(params []string) []interface{} {
+	s := make([]interface{}, 0)
+	for _, v := range params {
+		s = append(s, v)
+	}
+
+	return s
 }

@@ -1,0 +1,41 @@
+syntax = "proto3";
+
+package borealis.v1beta1;
+
+option go_package = "/proto";
+
+service Commands {
+  rpc Command(CommandRequest) returns (CommandResponse) {};
+}
+
+message CommandRequest {
+  ActionTypes action_type = 1;
+
+  oneof message {
+    PlanRequest plan_request = 2;
+  }
+}
+
+message CommandResponse {
+  ActionTypes action_type = 1;
+
+  oneof message {
+    PlanResponse plan_response = 2;
+  }
+}
+
+message PlanRequest {
+  string query = 4;
+  string query_id = 1;
+  string database = 2;
+  string instance_name = 5;
+  repeated string parameters = 3;
+}
+
+message PlanResponse  {
+  string plan = 1;
+}
+
+enum ActionTypes {
+  EXPLAIN = 0;
+}

@@ -1,13 +1,10 @@
 package analytics
 
 import (
-	"context"
 	"fmt"
 	"github.com/borealisdb/commons/credentials"
-	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/jmoiron/sqlx"
 	"github.com/sirupsen/logrus"
-	"google.golang.org/grpc"
 	"postgres-explain/backend/modules"
 	"postgres-explain/proto"
 )
@@ -27,7 +24,7 @@ func (m *Module) Register(log *logrus.Entry, db *sqlx.DB, credentialsProvider cr
 	m.Log.Infof("registered")
 }
 
-func (m *Module) Init(ctx context.Context, grpcServer *grpc.Server, mux *runtime.ServeMux, address string, opts []grpc.DialOption) error {
+func (m *Module) Init(initArgs modules.InitArgs) error {
 	repository := Repository{
 		log:                 m.Log,
 		credentialsProvider: m.CredentialsProvider,
@@ -38,8 +35,8 @@ func (m *Module) Init(ctx context.Context, grpcServer *grpc.Server, mux *runtime
 		credentialsProvider: m.CredentialsProvider,
 	}
 
-	proto.RegisterQueryAnalyticsServer(grpcServer, &service)
-	if err := proto.RegisterQueryAnalyticsHandlerFromEndpoint(ctx, mux, address, opts); err != nil {
+	proto.RegisterQueryAnalyticsServer(initArgs.GrpcServer, &service)
+	if err := proto.RegisterQueryAnalyticsHandlerFromEndpoint(initArgs.Ctx, initArgs.Mux, initArgs.GrpcAddress, initArgs.Opts); err != nil {
 		return fmt.Errorf("could not register QueryExplainerHandlerFromEndpoint: %v", err)
 	}
 	m.Log.Infof("initialized")

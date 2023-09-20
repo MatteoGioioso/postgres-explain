@@ -24,6 +24,7 @@ import (
 	"os"
 	"os/signal"
 	"postgres-explain/backend/auth"
+	"postgres-explain/backend/cache"
 	"postgres-explain/backend/middlewares"
 	"postgres-explain/backend/modules"
 	"runtime/debug"
@@ -108,6 +109,11 @@ func main() {
 	log := logger.NewDefaultLogger(*logLevelRaw, "backend")
 	log.Infof("Starting")
 
+	cacheClient, err := cache.New(cache.Params{})
+	if err != nil {
+		log.Fatalln(err)
+	}
+
 	authFactory := auth.Factory{Providers: map[string]auth.Auth{
 		auth.Oauth2Type: &auth.Oauth2{
 			Log: log,
@@ -118,7 +124,7 @@ func main() {
 	}}
 	authProvider := authFactory.Get(*authType)
 
-	err := authProvider.Init(ctx, auth.Params{
+	err = authProvider.Init(ctx, auth.Params{
 		IssuerUrl: fmt.Sprintf("%v%v/identity", *appHost, *rootUrlPath),
 		ClientID:  *clientID,
 	})
@@ -206,7 +212,14 @@ func main() {
 	}
 	for _, module := range modulesMap {
 		module.Register(log, db, credentialsProvider, modules.Params{})
-		if err := module.Init(ctx, grpcServer, proxyMux, grpcAddress, opts); err != nil {
+		if err := module.Init(modules.InitArgs{
+			Ctx:         ctx,
+			GrpcServer:  grpcServer,
+			Mux:         proxyMux,
+			GrpcAddress: grpcAddress,
+			Opts:        opts,
+			Cache:       cacheClient,
+		}); err != nil {
 			log.Fatalln("Module failed to initialize: %v", err)
 		}
 	}
@@ -215,9 +228,15 @@ func main() {
 
 	wg.Add(1)
 	go func() {
-		if err := grpcServer.Serve(listen); err != nil {
-			log.Fatalln(err)
-		}
+		go func() {
+			if err := grpcServer.Serve(listen); err != nil {
+				log.Fatalln(err)
+			}
+		}()
+
+		<-ctx.Done()
+		grpcServer.Stop()
+		listen.Close()
 	}()
 
 	wg.Add(1)

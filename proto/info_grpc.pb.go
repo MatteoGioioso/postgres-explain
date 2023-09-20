@@ -23,6 +23,7 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type InfoClient interface {
 	GetClusters(ctx context.Context, in *GetClustersRequest, opts ...grpc.CallOption) (*GetClustersResponse, error)
+	GetClusterInstances(ctx context.Context, in *GetClusterInstancesRequest, opts ...grpc.CallOption) (*GetClusterInstancesResponse, error)
 }
 
 type infoClient struct {
@@ -42,11 +43,21 @@ func (c *infoClient) GetClusters(ctx context.Context, in *GetClustersRequest, op
 	return out, nil
 }
 
+func (c *infoClient) GetClusterInstances(ctx context.Context, in *GetClusterInstancesRequest, opts ...grpc.CallOption) (*GetClusterInstancesResponse, error) {
+	out := new(GetClusterInstancesResponse)
+	err := c.cc.Invoke(ctx, "/borealis.v1beta1.Info/GetClusterInstances", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // InfoServer is the server API for Info service.
 // All implementations must embed UnimplementedInfoServer
 // for forward compatibility
 type InfoServer interface {
 	GetClusters(context.Context, *GetClustersRequest) (*GetClustersResponse, error)
+	GetClusterInstances(context.Context, *GetClusterInstancesRequest) (*GetClusterInstancesResponse, error)
 	mustEmbedUnimplementedInfoServer()
 }
 
@@ -56,6 +67,9 @@ type UnimplementedInfoServer struct {
 
 func (UnimplementedInfoServer) GetClusters(context.Context, *GetClustersRequest) (*GetClustersResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetClusters not implemented")
+}
+func (UnimplementedInfoServer) GetClusterInstances(context.Context, *GetClusterInstancesRequest) (*GetClusterInstancesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetClusterInstances not implemented")
 }
 func (UnimplementedInfoServer) mustEmbedUnimplementedInfoServer() {}
 
@@ -88,6 +102,24 @@ func _Info_GetClusters_Handler(srv interface{}, ctx context.Context, dec func(in
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Info_GetClusterInstances_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetClusterInstancesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(InfoServer).GetClusterInstances(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/borealis.v1beta1.Info/GetClusterInstances",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(InfoServer).GetClusterInstances(ctx, req.(*GetClusterInstancesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Info_ServiceDesc is the grpc.ServiceDesc for Info service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -98,6 +130,10 @@ var Info_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetClusters",
 			Handler:    _Info_GetClusters_Handler,
+		},
+		{
+			MethodName: "GetClusterInstances",
+			Handler:    _Info_GetClusterInstances_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

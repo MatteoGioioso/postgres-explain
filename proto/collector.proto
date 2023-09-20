@@ -45,6 +45,7 @@ message MetricsBucket {
   string node_id = 224;
   // Node name
   string node_name = 225;
+  string instance_name = 253;
   // Node type
   string node_type = 226;
   // Machine identifier
@@ -213,10 +214,13 @@ message ActivitySample {
   // Duration of bucket.
   uint32 period_length_secs = 17;
 
-  string cluster_name = 18;
-  string instance_name = 19;
   string query_id = 21;
   float cpu_cores = 22;
+
+  string cluster_name = 18;
+  string instance_name = 19;
+  string instance_host = 24;
+  string collector_host = 23;
 }
 
 message StatementsCollectResponse {}
@@ -261,3 +265,16 @@ message ParsedLogLine {
 }
 
 message LogsCollectResponse {}
+
+service Collector {
+  rpc Register(RegisterRequest) returns (RegisterResponse);
+}
+
+message RegisterRequest {
+  string cluster_name = 1;
+  string instance_name = 2;
+  string instance_host = 3;
+  string collector_host = 4;
+}
+
+message RegisterResponse {}

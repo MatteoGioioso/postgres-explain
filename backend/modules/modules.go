@@ -7,12 +7,22 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
+	"postgres-explain/backend/cache"
 )
 
 type Module interface {
 	Register(log *logrus.Entry, db *sqlx.DB, credentialsProvider credentials.Credentials, params Params)
-	Init(ctx context.Context, grpcServer *grpc.Server, mux *grpc_gateway.ServeMux, grpcAddress string, opts []grpc.DialOption) error
+	Init(initArgs InitArgs) error
 }
 
 type Params struct {
+}
+
+type InitArgs struct {
+	Ctx         context.Context
+	GrpcServer  *grpc.Server
+	Mux         *grpc_gateway.ServeMux
+	GrpcAddress string
+	Cache       *cache.Client
+	Opts        []grpc.DialOption
 }

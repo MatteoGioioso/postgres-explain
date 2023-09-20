@@ -34,11 +34,12 @@ message SaveQueryPlanRequest {
   google.protobuf.Timestamp period_start_from = 1;
   google.protobuf.Timestamp period_start_to = 2;
 
-  string cluster_name = 3;
+  string instance_name = 3;
+  string cluster_name = 11;
+
   string query_id = 4;
   string query = 7;
   string database = 5;
-  string namespace = 6;
   string optimization_id = 9;
   string alias = 10;
   repeated string parameters = 8;

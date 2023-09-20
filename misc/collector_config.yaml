@@ -1,6 +1,6 @@
 instances:
-  - name: postgres1
-    clusterName: mycluster
-    host: postgres
-    username: postgres
-    password: postgres
+    postgres1:
+      clusterName: mycluster
+      hostname: postgres_one
+      username: postgres
+      password: postgres

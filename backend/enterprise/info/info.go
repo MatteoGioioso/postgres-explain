@@ -1,4 +1,4 @@
-package query_explainer
+package info
 
 import (
 	"fmt"
@@ -9,7 +9,7 @@ import (
 	"postgres-explain/proto"
 )
 
-const ModuleName = "query_explainer"
+const ModuleName = "info"
 
 type Module struct {
 	DB                  *sqlx.DB
@@ -25,17 +25,18 @@ func (m *Module) Register(log *logrus.Entry, db *sqlx.DB, credentialsProvider cr
 }
 
 func (m *Module) Init(initArgs modules.InitArgs) error {
-	repository := Repository{DB: m.DB, Log: m.Log}
+	repository := Repository{credentialsProvider: m.CredentialsProvider, log: m.Log, cacheClient: initArgs.Cache}
 	service := Service{
 		log:                 m.Log,
 		Repo:                repository,
 		credentialsProvider: m.CredentialsProvider,
 	}
 
-	proto.RegisterQueryExplainerServer(initArgs.GrpcServer, &service)
-	if err := proto.RegisterQueryExplainerHandlerFromEndpoint(initArgs.Ctx, initArgs.Mux, initArgs.GrpcAddress, initArgs.Opts); err != nil {
-		return fmt.Errorf("could not register QueryExplainerHandlerFromEndpoint: %v", err)
+	proto.RegisterInfoServer(initArgs.GrpcServer, &service)
+	if err := proto.RegisterInfoHandlerFromEndpoint(initArgs.Ctx, initArgs.Mux, initArgs.GrpcAddress, initArgs.Opts); err != nil {
+		return fmt.Errorf("could not register InfoHandlerFromEndpoint: %v", err)
 	}
 	m.Log.Infof("initialized")
+
 	return nil
 }

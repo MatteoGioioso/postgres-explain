@@ -1,13 +1,10 @@
 package info
 
 import (
-	"context"
 	"fmt"
 	"github.com/borealisdb/commons/credentials"
-	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/jmoiron/sqlx"
 	"github.com/sirupsen/logrus"
-	"google.golang.org/grpc"
 	"postgres-explain/backend/modules"
 	"postgres-explain/proto"
 )
@@ -27,7 +24,7 @@ func (m *Module) Register(log *logrus.Entry, db *sqlx.DB, credentialsProvider cr
 	m.Log.Infof("registered")
 }
 
-func (m *Module) Init(ctx context.Context, grpcServer *grpc.Server, mux *runtime.ServeMux, address string, opts []grpc.DialOption) error {
+func (m *Module) Init(initArgs modules.InitArgs) error {
 	repository := Repository{credentialsProvider: m.CredentialsProvider, log: m.Log}
 	service := Service{
 		log:                 m.Log,
@@ -35,8 +32,8 @@ func (m *Module) Init(ctx context.Context, grpcServer *grpc.Server, mux *runtime
 		credentialsProvider: m.CredentialsProvider,
 	}
 
-	proto.RegisterInfoServer(grpcServer, &service)
-	if err := proto.RegisterInfoHandlerFromEndpoint(ctx, mux, address, opts); err != nil {
+	proto.RegisterInfoServer(initArgs.GrpcServer, &service)
+	if err := proto.RegisterInfoHandlerFromEndpoint(initArgs.Ctx, initArgs.Mux, initArgs.GrpcAddress, initArgs.Opts); err != nil {
 		return fmt.Errorf("could not register InfoHandlerFromEndpoint: %v", err)
 	}
 	m.Log.Infof("initialized")

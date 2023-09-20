@@ -29,6 +29,9 @@ gen.wasm: gen.types
 gen.core:
 	./core.sh
 
+gen.enterprise:
+	./enterprise.sh
+
 gen.sanitize:
 	curl -o backend/shared/sanitize.go https://raw.githubusercontent.com/jackc/pgx/master/internal/sanitize/sanitize.go
 	sed -i 's/package sanitize/package shared/' backend/shared/sanitize.go
@@ -40,8 +43,12 @@ build.collector:
 	(cd collector/ && go mod tidy -modfile=$(GOMODFILE) && GOOS=linux GOARCH=amd64 go build -modfile=$(GOMODFILE) -o bin/collector .)
 
 build.backend.core: gen.core build.backend
+build.backend.enterprise: gen.enterprise build.backend
 
-run: build.backend.core
+run.core: build.backend.core
+	docker-compose up --build --remove-orphans
+
+run.enterprise: build.backend.enterprise build.collector
 	docker-compose up --build --remove-orphans
 
 run.frontend:

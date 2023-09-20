@@ -33,6 +33,16 @@ services:
     volumes:
       - ./misc/init.sql:/docker-entrypoint-initdb.d/init.sql
 
+  collector:
+    image: postgres-explain/collector:latest
+    container_name: collector
+    build:
+      dockerfile: collector/Dockerfile
+      context: .
+    environment:
+      DESTINATION_HOST: backend:8081
+      COLLECTOR_HOST: collector:8083
+
   clickhouse:
     image: clickhouse/clickhouse-server
     container_name: clickhouse
