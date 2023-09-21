@@ -1,0 +1,102 @@
+syntax = "proto3";
+
+package borealis.v1beta1;
+
+option go_package = "/proto";
+
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+import "shared.proto";
+
+service Activities {
+  rpc GetProfile(ProfileRequest) returns (ProfileReply) {
+    option (google.api.http) = {
+      post: "/v0/activities/GetProfile"
+      body: "*"
+    };
+  }
+
+  rpc GetTopSQL(TopSQLRequest) returns (TopSQLReply) {
+    option (google.api.http) = {
+      post: "/v0/activities/GetTopSQL"
+      body: "*"
+    };
+  }
+
+  rpc GetQueryDetails(GetQueryDetailsRequest) returns (GetQueryDetailsResponse) {
+    option (google.api.http) = {
+      post: "/v0/activities/GetQueryDetails"
+      body: "*"
+    };
+  }
+
+  rpc GetTopWaitEventsLoadByGroupName(GetTopWaitEventsLoadByGroupNameRequest) returns (GetTopWaitEventsLoadByGroupNameResponse) {
+    option (google.api.http) = {
+      post: "/v0/activities/GetTopWaitEventsLoadByGroupName"
+      body: "*"
+    };
+  }
+}
+
+message ProfileRequest {
+  google.protobuf.Timestamp period_start_from = 1;
+  google.protobuf.Timestamp period_start_to = 2;
+  string cluster_name = 3;
+}
+
+message ProfileReply {
+  map<string, Trace> traces = 1;
+  float current_cpu_cores = 4;
+}
+
+message Trace {
+  repeated google.protobuf.Timestamp x_values_timestamp = 1;
+  repeated float x_values_float = 4;
+  repeated string x_values_string = 5;
+  repeated float y_values_float = 2;
+  map<string, Metadata> x_values_metadata = 7;
+  string color = 6;
+}
+
+message Metadata {
+  repeated string meta = 1;
+}
+
+message QueriesMetrics {
+  map<string, MetricValues> metrics = 1;
+}
+
+message TopSQLRequest {
+  google.protobuf.Timestamp period_start_from = 1;
+  google.protobuf.Timestamp period_start_to = 2;
+  string cluster_name = 3;
+}
+
+message TopSQLReply {
+  map<string, Trace> traces = 1;
+  map<string, QueriesMetrics> queries_metrics = 2;
+}
+
+message GetQueryDetailsRequest {
+  google.protobuf.Timestamp period_start_from = 1;
+  google.protobuf.Timestamp period_start_to = 2;
+  string cluster_name = 3;
+  string query_id = 4;
+}
+
+message GetQueryDetailsResponse {
+  map<string, Trace> traces = 1;
+}
+
+message GetTopWaitEventsLoadByGroupNameRequest {
+  google.protobuf.Timestamp period_start_from = 1;
+  google.protobuf.Timestamp period_start_to = 2;
+  string cluster_name = 3;
+  string group_name = 4;
+}
+
+message GetTopWaitEventsLoadByGroupNameResponse {
+  map<string, Trace> traces = 1;
+  string groups = 2;
+}
+

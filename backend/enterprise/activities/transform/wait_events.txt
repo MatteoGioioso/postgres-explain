@@ -1,0 +1,232 @@
+Activity:ArchiverMain__Waiting in main loop of archiver process.
+Activity:AutoVacuumMain__Waiting in main loop of autovacuum launcher process.
+Activity:BgWriterHibernate__Waiting in background writer process, hibernating.
+Activity:BgWriterMain__Waiting in main loop of background writer process.
+Activity:CheckpointerMain__Waiting in main loop of checkpointer process.
+Activity:LogicalApplyMain__Waiting in main loop of logical replication apply process.
+Activity:LogicalLauncherMain__Waiting in main loop of logical replication launcher process.
+Activity:PgStatMain__Waiting in main loop of statistics collector process.
+Activity:RecoveryWalStream__Waiting in main loop of startup process for WAL to arrive, during streaming recovery.
+Activity:SysLoggerMain__Waiting in main loop of syslogger process.
+Activity:WalReceiverMain__Waiting in main loop of WAL receiver process.
+Activity:WalSenderMain__Waiting in main loop of WAL sender process.
+Activity:WalWriterMain__Waiting in main loop of WAL writer process.
+BufferPin:BufferPin__Waiting to acquire an exclusive pin on a buffer.
+Client:ClientRead__Waiting to read data from the client.
+Client:ClientWrite__Waiting to write data to the client.
+Client:GSSOpenServer__Waiting to read data from the client while establishing a GSSAPI session.
+Client:LibPQWalReceiverConnect__Waiting in WAL receiver to establish connection to remote server.
+Client:LibPQWalReceiverReceive__Waiting in WAL receiver to receive data from remote server.
+Client:SSLOpenServer__Waiting for SSL while attempting connection.
+Client:WalSenderWaitForWAL__Waiting for WAL to be flushed in WAL sender process.
+Client:WalSenderWriteData__Waiting for any activity when processing replies from WAL receiver in WAL sender process.
+Extension:Extension__Waiting in an extension.
+IO:BaseBackupRead__Waiting for base backup to read from a file.
+IO:BufFileRead__Waiting for a read from a buffered file.
+IO:BufFileWrite__Waiting for a write to a buffered file.
+IO:BufFileTruncate__Waiting for a buffered file to be truncated.
+IO:ControlFileRead__Waiting for a read from the pg_control file.
+IO:ControlFileSync__Waiting for the pg_control file to reach durable storage.
+IO:ControlFileSyncUpdate__Waiting for an update to the pg_control file to reach durable storage.
+IO:ControlFileWrite__Waiting for a write to the pg_control file.
+IO:ControlFileWriteUpdate__Waiting for a write to update the pg_control file.
+IO:CopyFileRead__Waiting for a read during a file copy operation.
+IO:CopyFileWrite__Waiting for a write during a file copy operation.
+IO:DSMFillZeroWrite__Waiting to fill a dynamic shared memory backing file with zeroes.
+IO:DataFileExtend__Waiting for a relation data file to be extended.
+IO:DataFileFlush__Waiting for a relation data file to reach durable storage.
+IO:DataFileImmediateSync__Waiting for an immediate synchronization of a relation data file to durable storage.
+IO:DataFilePrefetch__Waiting for an asynchronous prefetch from a relation data file.
+IO:DataFileRead__Waiting for a read from a relation data file.
+IO:DataFileSync__Waiting for changes to a relation data file to reach durable storage.
+IO:DataFileTruncate__Waiting for a relation data file to be truncated.
+IO:DataFileWrite__Waiting for a write to a relation data file.
+IO:LockFileAddToDataDirRead__Waiting for a read while adding a line to the data directory lock file.
+IO:LockFileAddToDataDirSync__Waiting for data to reach durable storage while adding a line to the data directory lock file.
+IO:LockFileAddToDataDirWrite__Waiting for a write while adding a line to the data directory lock file.
+IO:LockFileCreateRead__Waiting to read while creating the data directory lock file.
+IO:LockFileCreateSync__Waiting for data to reach durable storage while creating the data directory lock file.
+IO:LockFileCreateWrite__Waiting for a write while creating the data directory lock file.
+IO:LockFileReCheckDataDirRead__Waiting for a read during recheck of the data directory lock file.
+IO:LogicalRewriteCheckpointSync__Waiting for logical rewrite mappings to reach durable storage during a checkpoint.
+IO:LogicalRewriteMappingSync__Waiting for mapping data to reach durable storage during a logical rewrite.
+IO:LogicalRewriteMappingWrite__Waiting for a write of mapping data during a logical rewrite.
+IO:LogicalRewriteSync__Waiting for logical rewrite mappings to reach durable storage.
+IO:LogicalRewriteTruncate__Waiting for truncate of mapping data during a logical rewrite.
+IO:LogicalRewriteWrite__Waiting for a write of logical rewrite mappings.
+IO:RelationMapRead__Waiting for a read of the relation map file.
+IO:RelationMapSync__Waiting for the relation map file to reach durable storage.
+IO:RelationMapWrite__Waiting for a write to the relation map file.
+IO:ReorderBufferRead__Waiting for a read during reorder buffer management.
+IO:ReorderBufferWrite__Waiting for a write during reorder buffer management.
+IO:ReorderLogicalMappingRead__Waiting for a read of a logical mapping during reorder buffer management.
+IO:ReplicationSlotRead__Waiting for a read from a replication slot control file.
+IO:ReplicationSlotRestoreSync__Waiting for a replication slot control file to reach durable storage while restoring it to memory.
+IO:ReplicationSlotSync__Waiting for a replication slot control file to reach durable storage.
+IO:ReplicationSlotWrite__Waiting for a write to a replication slot control file.
+IO:SLRUFlushSync__Waiting for SLRU data to reach durable storage during a checkpoint or database shutdown.
+IO:SLRURead__Waiting for a read of an SLRU page.
+IO:SLRUSync__Waiting for SLRU data to reach durable storage following a page write.
+IO:SLRUWrite__Waiting for a write of an SLRU page.
+IO:SnapbuildRead__Waiting for a read of a serialized historical catalog snapshot.
+IO:SnapbuildSync__Waiting for a serialized historical catalog snapshot to reach durable storage.
+IO:SnapbuildWrite__Waiting for a write of a serialized historical catalog snapshot.
+IO:TimelineHistoryFileSync__Waiting for a timeline history file received via streaming replication to reach durable storage.
+IO:TimelineHistoryFileWrite__Waiting for a write of a timeline history file received via streaming replication.
+IO:TimelineHistoryRead__Waiting for a read of a timeline history file.
+IO:TimelineHistorySync__Waiting for a newly created timeline history file to reach durable storage.
+IO:TimelineHistoryWrite__Waiting for a write of a newly created timeline history file.
+IO:TwophaseFileRead__Waiting for a read of a two phase state file.
+IO:TwophaseFileSync__Waiting for a two phase state file to reach durable storage.
+IO:TwophaseFileWrite__Waiting for a write of a two phase state file.
+IO:WALBootstrapSync__Waiting for WAL to reach durable storage during bootstrapping.
+IO:WALBootstrapWrite__Waiting for a write of a WAL page during bootstrapping.
+IO:WALCopyRead__Waiting for a read when creating a new WAL segment by copying an existing one.
+IO:WALCopySync__Waiting for a new WAL segment created by copying an existing one to reach durable storage.
+IO:WALCopyWrite__Waiting for a write when creating a new WAL segment by copying an existing one.
+IO:WALInitSync__Waiting for a newly initialized WAL file to reach durable storage.
+IO:WALInitWrite__Waiting for a write while initializing a new WAL file.
+IO:WALRead__Waiting for a read from a WAL file.
+IO:WALSenderTimelineHistoryRead__Waiting for a read from a timeline history file during a walsender timeline command.
+IO:WALSync__Waiting for a WAL file to reach durable storage.
+IO:WALSyncMethodAssign__Waiting for data to reach durable storage while assigning a new WAL sync method.
+IO:WALWrite__Waiting for a write to a WAL file.
+IO:LogicalChangesRead__Waiting for a read from a logical changes file.
+IO:LogicalChangesWrite__Waiting for a write to a logical changes file.
+IO:LogicalSubxactRead__Waiting for a read from a logical subxact file.
+IO:LogicalSubxactWrite__Waiting for a write to a logical subxact file.
+IPC:AppendReady__Waiting for subplan nodes of an Append plan node to be ready.
+IPC:BackendTermination__Waiting for the termination of another backend.
+IPC:BackupWaitWalArchive__Waiting for WAL files required for a backup to be successfully archived.
+IPC:BgWorkerShutdown__Waiting for background worker to shut down.
+IPC:BgWorkerStartup__Waiting for background worker to start up.
+IPC:BtreePage__Waiting for the page number needed to continue a parallel B-tree scan to become available.
+IPC:BufferIO__Waiting for buffer I/O to complete.
+IPC:CheckpointDone__Waiting for a checkpoint to complete.
+IPC:CheckpointStart__Waiting for a checkpoint to start.
+IPC:ExecuteGather__Waiting for activity from a child process while executing a Gather plan node.
+IPC:HashBatchAllocate__Waiting for an elected Parallel Hash participant to allocate a hash table.
+IPC:HashBatchElect__Waiting to elect a Parallel Hash participant to allocate a hash table.
+IPC:HashBatchLoad__Waiting for other Parallel Hash participants to finish loading a hash table.
+IPC:HashBuildAllocate__Waiting for an elected Parallel Hash participant to allocate the initial hash table.
+IPC:HashBuildElect__Waiting to elect a Parallel Hash participant to allocate the initial hash table.
+IPC:HashBuildHashInner__Waiting for other Parallel Hash participants to finish hashing the inner relation.
+IPC:HashBuildHashOuter__Waiting for other Parallel Hash participants to finish partitioning the outer relation.
+IPC:HashGrowBatchesAllocate__Waiting for an elected Parallel Hash participant to allocate more batches.
+IPC:HashGrowBatchesDecide__Waiting to elect a Parallel Hash participant to decide on future batch growth.
+IPC:HashGrowBatchesElect__Waiting to elect a Parallel Hash participant to allocate more batches.
+IPC:HashGrowBatchesFinish__Waiting for an elected Parallel Hash participant to decide on future batch growth.
+IPC:HashGrowBatchesRepartition__Waiting for other Parallel Hash participants to finish repartitioning.
+IPC:HashGrowBucketsAllocate__Waiting for an elected Parallel Hash participant to finish allocating more buckets.
+IPC:HashGrowBucketsElect__Waiting to elect a Parallel Hash participant to allocate more buckets.
+IPC:HashGrowBucketsReinsert__Waiting for other Parallel Hash participants to finish inserting tuples into new buckets.
+IPC:LogicalSyncData__Waiting for a logical replication remote server to send data for initial table synchronization.
+IPC:LogicalSyncStateChange__Waiting for a logical replication remote server to change state.
+IPC:MessageQueueInternal__Waiting for another process to be attached to a shared message queue.
+IPC:MessageQueuePutMessage__Waiting to write a protocol message to a shared message queue.
+IPC:MessageQueueReceive__Waiting to receive bytes from a shared message queue.
+IPC:MessageQueueSend__Waiting to send bytes to a shared message queue.
+IPC:ParallelBitmapScan__Waiting for parallel bitmap scan to become initialized.
+IPC:ParallelCreateIndexScan__Waiting for parallel CREATE INDEX workers to finish heap scan.
+IPC:ParallelFinish__Waiting for parallel workers to finish computing.
+IPC:ProcArrayGroupUpdate__Waiting for the group leader to clear the transaction ID at end of a parallel operation.
+IPC:ProcSignalBarrier__Waiting for a barrier event to be processed by all backends.
+IPC:Promote__Waiting for standby promotion.
+IPC:RecoveryConflictSnapshot__Waiting for recovery conflict resolution for a vacuum cleanup.
+IPC:RecoveryConflictTablespace__Waiting for recovery conflict resolution for dropping a tablespace.
+IPC:RecoveryPause__Waiting for recovery to be resumed.
+IPC:ReplicationOriginDrop__Waiting for a replication origin to become inactive so it can be dropped.
+IPC:ReplicationSlotDrop__Waiting for a replication slot to become inactive so it can be dropped.
+IPC:SafeSnapshot__Waiting to obtain a valid snapshot for a READ ONLY DEFERRABLE transaction.
+IPC:SyncRep__Waiting for confirmation from a remote server during synchronous replication.
+IPC:WalReceiverExit__Waiting for the WAL receiver to exit.
+IPC:WalReceiverWaitStart__Waiting for startup process to send initial data for streaming replication.
+IPC:XactGroupUpdate__Waiting for the group leader to update transaction status at end of a parallel operation.
+Lock:advisory__Waiting to acquire an advisory user lock.
+Lock:extend__Waiting to extend a relation.
+Lock:frozenid__Waiting to update pg_database.datfrozenxid and pg_database.datminmxid.
+Lock:object__Waiting to acquire a lock on a non-relation database object.
+Lock:page__Waiting to acquire a lock on a page of a relation.
+Lock:relation__Waiting to acquire a lock on a relation.
+Lock:spectoken__Waiting to acquire a speculative insertion lock.
+Lock:transactionid__Waiting for a transaction to finish.
+Lock:tuple__Waiting to acquire a lock on a tuple.
+Lock:userlock__Waiting to acquire a user lock.
+Lock:virtualxid__Waiting to acquire a virtual transaction ID lock.
+LWLock:AddinShmemInit__Waiting to manage an extension's space allocation in shared memory.
+LWLock:AutoFile__Waiting to update the postgresql.auto.conf file.
+LWLock:Autovacuum__Waiting to read or update the current state of autovacuum workers.
+LWLock:AutovacuumSchedule__Waiting to ensure that a table selected for autovacuum still needs vacuuming.
+LWLock:BackgroundWorker__Waiting to read or update background worker state.
+LWLock:BtreeVacuum__Waiting to read or update vacuum-related information for a B-tree index.
+LWLock:BufferContent__Waiting to access a data page in memory.
+LWLock:BufferMapping__Waiting to associate a data block with a buffer in the buffer pool.
+LWLock:CheckpointerComm__Waiting to manage fsync requests.
+LWLock:CommitTs__Waiting to read or update the last value set for a transaction commit timestamp.
+LWLock:CommitTsBuffer__Waiting for I/O on a commit timestamp SLRU buffer.
+LWLock:CommitTsSLRU__Waiting to access the commit timestamp SLRU cache.
+LWLock:ControlFile__Waiting to read or update the pg_control file or create a new WAL file.
+LWLock:DynamicSharedMemoryControl__Waiting to read or update dynamic shared memory allocation information.
+LWLock:LockFastPath__Waiting to read or update a process' fast-path lock information.
+LWLock:LockManager__Waiting to read or update information about “heavyweight” locks.
+LWLock:LogicalRepWorker__Waiting to read or update the state of logical replication workers.
+LWLock:MultiXactGen__Waiting to read or update shared multixact state.
+LWLock:MultiXactMemberBuffer__Waiting for I/O on a multixact member SLRU buffer.
+LWLock:MultiXactMemberSLRU__Waiting to access the multixact member SLRU cache.
+LWLock:MultiXactOffsetBuffer__Waiting for I/O on a multixact offset SLRU buffer.
+LWLock:MultiXactOffsetSLRU__Waiting to access the multixact offset SLRU cache.
+LWLock:MultiXactTruncation__Waiting to read or truncate multixact information.
+LWLock:NotifyBuffer__Waiting for I/O on a NOTIFY message SLRU buffer.
+LWLock:NotifyQueue__Waiting to read or update NOTIFY messages.
+LWLock:NotifyQueueTail__Waiting to update limit on NOTIFY message storage.
+LWLock:NotifySLRU__Waiting to access the NOTIFY message SLRU cache.
+LWLock:OidGen__Waiting to allocate a new OID.
+LWLock:OldSnapshotTimeMap__Waiting to read or update old snapshot control information.
+LWLock:ParallelAppend__Waiting to choose the next subplan during Parallel Append plan execution.
+LWLock:ParallelHashJoin__Waiting to synchronize workers during Parallel Hash Join plan execution.
+LWLock:ParallelQueryDSA__Waiting for parallel query dynamic shared memory allocation.
+LWLock:PerSessionDSA__Waiting for parallel query dynamic shared memory allocation.
+LWLock:PerSessionRecordType__Waiting to access a parallel query's information about composite types.
+LWLock:PerSessionRecordTypmod__Waiting to access a parallel query's information about type modifiers that identify anonymous record types.
+LWLock:PerXactPredicateList__Waiting to access the list of predicate locks held by the current serializable transaction during a parallel query.
+LWLock:PredicateLockManager__Waiting to access predicate lock information used by serializable transactions.
+LWLock:ProcArray__Waiting to access the shared per-process data structures (typically, to get a snapshot or report a session's transaction ID).
+LWLock:RelationMapping__Waiting to read or update a pg_filenode.map file (used to track the filenode assignments of certain system catalogs).
+LWLock:RelCacheInit__Waiting to read or update a pg_internal.init relation cache initialization file.
+LWLock:ReplicationOrigin__Waiting to create, drop or use a replication origin.
+LWLock:ReplicationOriginState__Waiting to read or update the progress of one replication origin.
+LWLock:ReplicationSlotAllocation__Waiting to allocate or free a replication slot.
+LWLock:ReplicationSlotControl__Waiting to read or update replication slot state.
+LWLock:ReplicationSlotIO__Waiting for I/O on a replication slot.
+LWLock:SerialBuffer__Waiting for I/O on a serializable transaction conflict SLRU buffer.
+LWLock:SerializableFinishedList__Waiting to access the list of finished serializable transactions.
+LWLock:SerializablePredicateList__Waiting to access the list of predicate locks held by serializable transactions.
+LWLock:SerializableXactHash__Waiting to read or update information about serializable transactions.
+LWLock:SerialSLRU__Waiting to access the serializable transaction conflict SLRU cache.
+LWLock:SharedTidBitmap__Waiting to access a shared TID bitmap during a parallel bitmap index scan.
+LWLock:SharedTupleStore__Waiting to access a shared tuple store during parallel query.
+LWLock:ShmemIndex__Waiting to find or allocate space in shared memory.
+LWLock:SInvalRead__Waiting to retrieve messages from the shared catalog invalidation queue.
+LWLock:SInvalWrite__Waiting to add a message to the shared catalog invalidation queue.
+LWLock:SubtransBuffer__Waiting for I/O on a sub-transaction SLRU buffer.
+LWLock:SubtransSLRU__Waiting to access the sub-transaction SLRU cache.
+LWLock:SyncRep__Waiting to read or update information about the state of synchronous replication.
+LWLock:SyncScan__Waiting to select the starting location of a synchronized table scan.
+LWLock:TablespaceCreate__Waiting to create or drop a tablespace.
+LWLock:TwoPhaseState__Waiting to read or update the state of prepared transactions.
+LWLock:WALBufMapping__Waiting to replace a page in WAL buffers.
+LWLock:WALInsert__Waiting to insert WAL data into a memory buffer.
+LWLock:WALWrite__Waiting for WAL buffers to be written to disk.
+LWLock:WrapLimitsVacuum__Waiting to update limits on transaction id and multixact consumption.
+LWLock:XactBuffer__Waiting for I/O on a transaction status SLRU buffer.
+LWLock:XactSLRU__Waiting to access the transaction status SLRU cache.
+LWLock:XactTruncation__Waiting to execute pg_xact_status or update the oldest transaction ID available to it.
+LWLock:XidGen__Waiting to allocate a new transaction ID.
+Timeout:BaseBackupThrottle__Waiting during base backup when throttling activity.
+Timeout:CheckpointWriteDelay__Waiting between writes while performing a checkpoint.
+Timeout:PgSleep__Waiting due to a call to pg_sleep or a sibling function.
+Timeout:RecoveryApplyDelay__Waiting to apply WAL during recovery because of a delay setting.
+Timeout:RecoveryRetrieveRetryInterval__Waiting during recovery when WAL data is not available from any source (pg_wal, archive or stream).
+Timeout:RegisterSyncRequest__Waiting while sending synchronization requests to the checkpointer, because the request queue is full.
+Timeout:VacuumDelay__Waiting in a cost-based vacuum delay point.
+CPU:CPU__Waiting on CPU

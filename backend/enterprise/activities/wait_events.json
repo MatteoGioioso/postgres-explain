@@ -1,0 +1,1382 @@
+{
+  "AddinShmemInit": {
+    "type": "AddinShmemInit",
+    "class": "LWLock",
+    "description": "Waiting to manage an extension's space allocation in shared memory.",
+    "color": "#acbcc9"
+  },
+  "AppendReady": {
+    "type": "AppendReady",
+    "class": "IPC",
+    "description": "Waiting for subplan nodes of an Append plan node to be ready.",
+    "color": "#fcf4e3"
+  },
+  "ArchiverMain": {
+    "type": "ArchiverMain",
+    "class": "Activity",
+    "description": "Waiting in main loop of archiver process.",
+    "color": "#d386ac"
+  },
+  "AutoFile": {
+    "type": "AutoFile",
+    "class": "LWLock",
+    "description": "Waiting to update the postgresql.auto.conf file.",
+    "color": "#89e2c2"
+  },
+  "AutoVacuumMain": {
+    "type": "AutoVacuumMain",
+    "class": "Activity",
+    "description": "Waiting in main loop of autovacuum launcher process.",
+    "color": "#e6c8ea"
+  },
+  "Autovacuum": {
+    "type": "Autovacuum",
+    "class": "LWLock",
+    "description": "Waiting to read or update the current state of autovacuum workers.",
+    "color": "#f1b27f"
+  },
+  "AutovacuumSchedule": {
+    "type": "AutovacuumSchedule",
+    "class": "LWLock",
+    "description": "Waiting to ensure that a table selected for autovacuum still needs vacuuming.",
+    "color": "#ef9bd4"
+  },
+  "BackendTermination": {
+    "type": "BackendTermination",
+    "class": "IPC",
+    "description": "Waiting for the termination of another backend.",
+    "color": "#c6e9a0"
+  },
+  "BackgroundWorker": {
+    "type": "BackgroundWorker",
+    "class": "LWLock",
+    "description": "Waiting to read or update background worker state.",
+    "color": "#e3f99d"
+  },
+  "BackupWaitWalArchive": {
+    "type": "BackupWaitWalArchive",
+    "class": "IPC",
+    "description": "Waiting for WAL files required for a backup to be successfully archived.",
+    "color": "#8694eb"
+  },
+  "BaseBackupRead": {
+    "type": "BaseBackupRead",
+    "class": "IO",
+    "description": "Waiting for base backup to read from a file.",
+    "color": "#a3c7f4"
+  },
+  "BaseBackupThrottle": {
+    "type": "BaseBackupThrottle",
+    "class": "Timeout",
+    "description": "Waiting during base backup when throttling activity.",
+    "color": "#daa38b"
+  },
+  "BgWorkerShutdown": {
+    "type": "BgWorkerShutdown",
+    "class": "IPC",
+    "description": "Waiting for background worker to shut down.",
+    "color": "#e0aab3"
+  },
+  "BgWorkerStartup": {
+    "type": "BgWorkerStartup",
+    "class": "IPC",
+    "description": "Waiting for background worker to start up.",
+    "color": "#cdee82"
+  },
+  "BgWriterHibernate": {
+    "type": "BgWriterHibernate",
+    "class": "Activity",
+    "description": "Waiting in background writer process, hibernating.",
+    "color": "#d88aa4"
+  },
+  "BgWriterMain": {
+    "type": "BgWriterMain",
+    "class": "Activity",
+    "description": "Waiting in main loop of background writer process.",
+    "color": "#ed8eda"
+  },
+  "BtreePage": {
+    "type": "BtreePage",
+    "class": "IPC",
+    "description": "Waiting for the page number needed to continue a parallel B-tree scan to become available.",
+    "color": "#a3e1ac"
+  },
+  "BtreeVacuum": {
+    "type": "BtreeVacuum",
+    "class": "LWLock",
+    "description": "Waiting to read or update vacuum-related information for a B-tree index.",
+    "color": "#96fcaf"
+  },
+  "BufFileRead": {
+    "type": "BufFileRead",
+    "class": "IO",
+    "description": "Waiting for a read from a buffered file.",
+    "color": "#93f7a6"
+  },
+  "BufFileTruncate": {
+    "type": "BufFileTruncate",
+    "class": "IO",
+    "description": "Waiting for a buffered file to be truncated.",
+    "color": "#a9c0e9"
+  },
+  "BufFileWrite": {
+    "type": "BufFileWrite",
+    "class": "IO",
+    "description": "Waiting for a write to a buffered file.",
+    "color": "#d287cc"
+  },
+  "BufferContent": {
+    "type": "BufferContent",
+    "class": "LWLock",
+    "description": "Waiting to access a data page in memory.",
+    "color": "#e0e3a8"
+  },
+  "BufferIO": {
+    "type": "BufferIO",
+    "class": "IPC",
+    "description": "Waiting for buffer I/O to complete.",
+    "color": "#d098d8"
+  },
+  "BufferMapping": {
+    "type": "BufferMapping",
+    "class": "LWLock",
+    "description": "Waiting to associate a data block with a buffer in the buffer pool.",
+    "color": "#fd90f7"
+  },
+  "BufferPin": {
+    "type": "BufferPin",
+    "class": "BufferPin",
+    "description": "Waiting to acquire an exclusive pin on a buffer.",
+    "color": "#9fead5"
+  },
+  "CPU": {
+    "type": "CPU",
+    "class": "CPU",
+    "description": "Waiting on CPU",
+    "color": "#cace8e"
+  },
+  "CheckpointDone": {
+    "type": "CheckpointDone",
+    "class": "IPC",
+    "description": "Waiting for a checkpoint to complete.",
+    "color": "#848bf6"
+  },
+  "CheckpointStart": {
+    "type": "CheckpointStart",
+    "class": "IPC",
+    "description": "Waiting for a checkpoint to start.",
+    "color": "#d4ecfb"
+  },
+  "CheckpointWriteDelay": {
+    "type": "CheckpointWriteDelay",
+    "class": "Timeout",
+    "description": "Waiting between writes while performing a checkpoint.",
+    "color": "#b0ebab"
+  },
+  "CheckpointerComm": {
+    "type": "CheckpointerComm",
+    "class": "LWLock",
+    "description": "Waiting to manage fsync requests.",
+    "color": "#d39b84"
+  },
+  "CheckpointerMain": {
+    "type": "CheckpointerMain",
+    "class": "Activity",
+    "description": "Waiting in main loop of checkpointer process.",
+    "color": "#d2a8ea"
+  },
+  "ClientRead": {
+    "type": "ClientRead",
+    "class": "Client",
+    "description": "Waiting to read data from the client.",
+    "color": "#fdafa4"
+  },
+  "ClientWrite": {
+    "type": "ClientWrite",
+    "class": "Client",
+    "description": "Waiting to write data to the client.",
+    "color": "#82acbe"
+  },
+  "CommitTs": {
+    "type": "CommitTs",
+    "class": "LWLock",
+    "description": "Waiting to read or update the last value set for a transaction commit timestamp.",
+    "color": "#d2fde0"
+  },
+  "CommitTsBuffer": {
+    "type": "CommitTsBuffer",
+    "class": "LWLock",
+    "description": "Waiting for I/O on a commit timestamp SLRU buffer.",
+    "color": "#d1869f"
+  },
+  "CommitTsSLRU": {
+    "type": "CommitTsSLRU",
+    "class": "LWLock",
+    "description": "Waiting to access the commit timestamp SLRU cache.",
+    "color": "#bdc7ea"
+  },
+  "ControlFile": {
+    "type": "ControlFile",
+    "class": "LWLock",
+    "description": "Waiting to read or update the pg_control file or create a new WAL file.",
+    "color": "#afdcc3"
+  },
+  "ControlFileRead": {
+    "type": "ControlFileRead",
+    "class": "IO",
+    "description": "Waiting for a read from the pg_control file.",
+    "color": "#8af2ba"
+  },
+  "ControlFileSync": {
+    "type": "ControlFileSync",
+    "class": "IO",
+    "description": "Waiting for the pg_control file to reach durable storage.",
+    "color": "#d9a5ce"
+  },
+  "ControlFileSyncUpdate": {
+    "type": "ControlFileSyncUpdate",
+    "class": "IO",
+    "description": "Waiting for an update to the pg_control file to reach durable storage.",
+    "color": "#86d5d9"
+  },
+  "ControlFileWrite": {
+    "type": "ControlFileWrite",
+    "class": "IO",
+    "description": "Waiting for a write to the pg_control file.",
+    "color": "#bca38c"
+  },
+  "ControlFileWriteUpdate": {
+    "type": "ControlFileWriteUpdate",
+    "class": "IO",
+    "description": "Waiting for a write to update the pg_control file.",
+    "color": "#d986a9"
+  },
+  "CopyFileRead": {
+    "type": "CopyFileRead",
+    "class": "IO",
+    "description": "Waiting for a read during a file copy operation.",
+    "color": "#86d6be"
+  },
+  "CopyFileWrite": {
+    "type": "CopyFileWrite",
+    "class": "IO",
+    "description": "Waiting for a write during a file copy operation.",
+    "color": "#e58ba9"
+  },
+  "DSMFillZeroWrite": {
+    "type": "DSMFillZeroWrite",
+    "class": "IO",
+    "description": "Waiting to fill a dynamic shared memory backing file with zeroes.",
+    "color": "#adbad9"
+  },
+  "DataFileExtend": {
+    "type": "DataFileExtend",
+    "class": "IO",
+    "description": "Waiting for a relation data file to be extended.",
+    "color": "#9bfa98"
+  },
+  "DataFileFlush": {
+    "type": "DataFileFlush",
+    "class": "IO",
+    "description": "Waiting for a relation data file to reach durable storage.",
+    "color": "#cedfef"
+  },
+  "DataFileImmediateSync": {
+    "type": "DataFileImmediateSync",
+    "class": "IO",
+    "description": "Waiting for an immediate synchronization of a relation data file to durable storage.",
+    "color": "#a7abf1"
+  },
+  "DataFilePrefetch": {
+    "type": "DataFilePrefetch",
+    "class": "IO",
+    "description": "Waiting for an asynchronous prefetch from a relation data file.",
+    "color": "#d3c285"
+  },
+  "DataFileRead": {
+    "type": "DataFileRead",
+    "class": "IO",
+    "description": "Waiting for a read from a relation data file.",
+    "color": "#c097f2"
+  },
+  "DataFileSync": {
+    "type": "DataFileSync",
+    "class": "IO",
+    "description": "Waiting for changes to a relation data file to reach durable storage.",
+    "color": "#fcaba0"
+  },
+  "DataFileTruncate": {
+    "type": "DataFileTruncate",
+    "class": "IO",
+    "description": "Waiting for a relation data file to be truncated.",
+    "color": "#99a8d3"
+  },
+  "DataFileWrite": {
+    "type": "DataFileWrite",
+    "class": "IO",
+    "description": "Waiting for a write to a relation data file.",
+    "color": "#afdbd6"
+  },
+  "DynamicSharedMemoryControl": {
+    "type": "DynamicSharedMemoryControl",
+    "class": "LWLock",
+    "description": "Waiting to read or update dynamic shared memory allocation information.",
+    "color": "#998089"
+  },
+  "ExecuteGather": {
+    "type": "ExecuteGather",
+    "class": "IPC",
+    "description": "Waiting for activity from a child process while executing a Gather plan node.",
+    "color": "#f1cbf0"
+  },
+  "Extension": {
+    "type": "Extension",
+    "class": "Extension",
+    "description": "Waiting in an extension.",
+    "color": "#90fac8"
+  },
+  "GSSOpenServer": {
+    "type": "GSSOpenServer",
+    "class": "Client",
+    "description": "Waiting to read data from the client while establishing a GSSAPI session.",
+    "color": "#92b2dd"
+  },
+  "HashBatchAllocate": {
+    "type": "HashBatchAllocate",
+    "class": "IPC",
+    "description": "Waiting for an elected Parallel Hash participant to allocate a hash table.",
+    "color": "#ccac8c"
+  },
+  "HashBatchElect": {
+    "type": "HashBatchElect",
+    "class": "IPC",
+    "description": "Waiting to elect a Parallel Hash participant to allocate a hash table.",
+    "color": "#dfcd82"
+  },
+  "HashBatchLoad": {
+    "type": "HashBatchLoad",
+    "class": "IPC",
+    "description": "Waiting for other Parallel Hash participants to finish loading a hash table.",
+    "color": "#b3c190"
+  },
+  "HashBuildAllocate": {
+    "type": "HashBuildAllocate",
+    "class": "IPC",
+    "description": "Waiting for an elected Parallel Hash participant to allocate the initial hash table.",
+    "color": "#eeeef7"
+  },
+  "HashBuildElect": {
+    "type": "HashBuildElect",
+    "class": "IPC",
+    "description": "Waiting to elect a Parallel Hash participant to allocate the initial hash table.",
+    "color": "#bbb68d"
+  },
+  "HashBuildHashInner": {
+    "type": "HashBuildHashInner",
+    "class": "IPC",
+    "description": "Waiting for other Parallel Hash participants to finish hashing the inner relation.",
+    "color": "#eb92dc"
+  },
+  "HashBuildHashOuter": {
+    "type": "HashBuildHashOuter",
+    "class": "IPC",
+    "description": "Waiting for other Parallel Hash participants to finish partitioning the outer relation.",
+    "color": "#bd89f4"
+  },
+  "HashGrowBatchesAllocate": {
+    "type": "HashGrowBatchesAllocate",
+    "class": "IPC",
+    "description": "Waiting for an elected Parallel Hash participant to allocate more batches.",
+    "color": "#a5d5f4"
+  },
+  "HashGrowBatchesDecide": {
+    "type": "HashGrowBatchesDecide",
+    "class": "IPC",
+    "description": "Waiting to elect a Parallel Hash participant to decide on future batch growth.",
+    "color": "#89ceb0"
+  },
+  "HashGrowBatchesElect": {
+    "type": "HashGrowBatchesElect",
+    "class": "IPC",
+    "description": "Waiting to elect a Parallel Hash participant to allocate more batches.",
+    "color": "#f49085"
+  },
+  "HashGrowBatchesFinish": {
+    "type": "HashGrowBatchesFinish",
+    "class": "IPC",
+    "description": "Waiting for an elected Parallel Hash participant to decide on future batch growth.",
+    "color": "#81eae8"
+  },
+  "HashGrowBatchesRepartition": {
+    "type": "HashGrowBatchesRepartition",
+    "class": "IPC",
+    "description": "Waiting for other Parallel Hash participants to finish repartitioning.",
+    "color": "#a4fc9c"
+  },
+  "HashGrowBucketsAllocate": {
+    "type": "HashGrowBucketsAllocate",
+    "class": "IPC",
+    "description": "Waiting for an elected Parallel Hash participant to finish allocating more buckets.",
+    "color": "#928ef2"
+  },
+  "HashGrowBucketsElect": {
+    "type": "HashGrowBucketsElect",
+    "class": "IPC",
+    "description": "Waiting to elect a Parallel Hash participant to allocate more buckets.",
+    "color": "#8d91cf"
+  },
+  "HashGrowBucketsReinsert": {
+    "type": "HashGrowBucketsReinsert",
+    "class": "IPC",
+    "description": "Waiting for other Parallel Hash participants to finish inserting tuples into new buckets.",
+    "color": "#d098f6"
+  },
+  "LibPQWalReceiverConnect": {
+    "type": "LibPQWalReceiverConnect",
+    "class": "Client",
+    "description": "Waiting in WAL receiver to establish connection to remote server.",
+    "color": "#c7adbb"
+  },
+  "LibPQWalReceiverReceive": {
+    "type": "LibPQWalReceiverReceive",
+    "class": "Client",
+    "description": "Waiting in WAL receiver to receive data from remote server.",
+    "color": "#d49096"
+  },
+  "LockFastPath": {
+    "type": "LockFastPath",
+    "class": "LWLock",
+    "description": "Waiting to read or update a process' fast-path lock information.",
+    "color": "#e0d2f0"
+  },
+  "LockFileAddToDataDirRead": {
+    "type": "LockFileAddToDataDirRead",
+    "class": "IO",
+    "description": "Waiting for a read while adding a line to the data directory lock file.",
+    "color": "#afe4e6"
+  },
+  "LockFileAddToDataDirSync": {
+    "type": "LockFileAddToDataDirSync",
+    "class": "IO",
+    "description": "Waiting for data to reach durable storage while adding a line to the data directory lock file.",
+    "color": "#db80c6"
+  },
+  "LockFileAddToDataDirWrite": {
+    "type": "LockFileAddToDataDirWrite",
+    "class": "IO",
+    "description": "Waiting for a write while adding a line to the data directory lock file.",
+    "color": "#c7bae9"
+  },
+  "LockFileCreateRead": {
+    "type": "LockFileCreateRead",
+    "class": "IO",
+    "description": "Waiting to read while creating the data directory lock file.",
+    "color": "#a898a6"
+  },
+  "LockFileCreateSync": {
+    "type": "LockFileCreateSync",
+    "class": "IO",
+    "description": "Waiting for data to reach durable storage while creating the data directory lock file.",
+    "color": "#e8d8d1"
+  },
+  "LockFileCreateWrite": {
+    "type": "LockFileCreateWrite",
+    "class": "IO",
+    "description": "Waiting for a write while creating the data directory lock file.",
+    "color": "#8cecb8"
+  },
+  "LockFileReCheckDataDirRead": {
+    "type": "LockFileReCheckDataDirRead",
+    "class": "IO",
+    "description": "Waiting for a read during recheck of the data directory lock file.",
+    "color": "#80a1cf"
+  },
+  "LockManager": {
+    "type": "LockManager",
+    "class": "LWLock",
+    "description": "Waiting to read or update information about “heavyweight” locks.",
+    "color": "#f7a784"
+  },
+  "LogicalApplyMain": {
+    "type": "LogicalApplyMain",
+    "class": "Activity",
+    "description": "Waiting in main loop of logical replication apply process.",
+    "color": "#fddab1"
+  },
+  "LogicalChangesRead": {
+    "type": "LogicalChangesRead",
+    "class": "IO",
+    "description": "Waiting for a read from a logical changes file.",
+    "color": "#f8fcac"
+  },
+  "LogicalChangesWrite": {
+    "type": "LogicalChangesWrite",
+    "class": "IO",
+    "description": "Waiting for a write to a logical changes file.",
+    "color": "#938cfb"
+  },
+  "LogicalLauncherMain": {
+    "type": "LogicalLauncherMain",
+    "class": "Activity",
+    "description": "Waiting in main loop of logical replication launcher process.",
+    "color": "#acd4c0"
+  },
+  "LogicalRepWorker": {
+    "type": "LogicalRepWorker",
+    "class": "LWLock",
+    "description": "Waiting to read or update the state of logical replication workers.",
+    "color": "#bcdfd7"
+  },
+  "LogicalRewriteCheckpointSync": {
+    "type": "LogicalRewriteCheckpointSync",
+    "class": "IO",
+    "description": "Waiting for logical rewrite mappings to reach durable storage during a checkpoint.",
+    "color": "#8285b0"
+  },
+  "LogicalRewriteMappingSync": {
+    "type": "LogicalRewriteMappingSync",
+    "class": "IO",
+    "description": "Waiting for mapping data to reach durable storage during a logical rewrite.",
+    "color": "#ac83b1"
+  },
+  "LogicalRewriteMappingWrite": {
+    "type": "LogicalRewriteMappingWrite",
+    "class": "IO",
+    "description": "Waiting for a write of mapping data during a logical rewrite.",
+    "color": "#efc4b9"
+  },
+  "LogicalRewriteSync": {
+    "type": "LogicalRewriteSync",
+    "class": "IO",
+    "description": "Waiting for logical rewrite mappings to reach durable storage.",
+    "color": "#f0cceb"
+  },
+  "LogicalRewriteTruncate": {
+    "type": "LogicalRewriteTruncate",
+    "class": "IO",
+    "description": "Waiting for truncate of mapping data during a logical rewrite.",
+    "color": "#c89e9a"
+  },
+  "LogicalRewriteWrite": {
+    "type": "LogicalRewriteWrite",
+    "class": "IO",
+    "description": "Waiting for a write of logical rewrite mappings.",
+    "color": "#c2caf1"
+  },
+  "LogicalSubxactRead": {
+    "type": "LogicalSubxactRead",
+    "class": "IO",
+    "description": "Waiting for a read from a logical subxact file.",
+    "color": "#9787e2"
+  },
+  "LogicalSubxactWrite": {
+    "type": "LogicalSubxactWrite",
+    "class": "IO",
+    "description": "Waiting for a write to a logical subxact file.",
+    "color": "#aefabc"
+  },
+  "LogicalSyncData": {
+    "type": "LogicalSyncData",
+    "class": "IPC",
+    "description": "Waiting for a logical replication remote server to send data for initial table synchronization.",
+    "color": "#e2a181"
+  },
+  "LogicalSyncStateChange": {
+    "type": "LogicalSyncStateChange",
+    "class": "IPC",
+    "description": "Waiting for a logical replication remote server to change state.",
+    "color": "#a2afd2"
+  },
+  "MessageQueueInternal": {
+    "type": "MessageQueueInternal",
+    "class": "IPC",
+    "description": "Waiting for another process to be attached to a shared message queue.",
+    "color": "#f5a78e"
+  },
+  "MessageQueuePutMessage": {
+    "type": "MessageQueuePutMessage",
+    "class": "IPC",
+    "description": "Waiting to write a protocol message to a shared message queue.",
+    "color": "#ee8bca"
+  },
+  "MessageQueueReceive": {
+    "type": "MessageQueueReceive",
+    "class": "IPC",
+    "description": "Waiting to receive bytes from a shared message queue.",
+    "color": "#a3dbc9"
+  },
+  "MessageQueueSend": {
+    "type": "MessageQueueSend",
+    "class": "IPC",
+    "description": "Waiting to send bytes to a shared message queue.",
+    "color": "#8cd6f1"
+  },
+  "MultiXactGen": {
+    "type": "MultiXactGen",
+    "class": "LWLock",
+    "description": "Waiting to read or update shared multixact state.",
+    "color": "#8a90a8"
+  },
+  "MultiXactMemberBuffer": {
+    "type": "MultiXactMemberBuffer",
+    "class": "LWLock",
+    "description": "Waiting for I/O on a multixact member SLRU buffer.",
+    "color": "#c9d6f8"
+  },
+  "MultiXactMemberSLRU": {
+    "type": "MultiXactMemberSLRU",
+    "class": "LWLock",
+    "description": "Waiting to access the multixact member SLRU cache.",
+    "color": "#bdc1be"
+  },
+  "MultiXactOffsetBuffer": {
+    "type": "MultiXactOffsetBuffer",
+    "class": "LWLock",
+    "description": "Waiting for I/O on a multixact offset SLRU buffer.",
+    "color": "#ebf8a3"
+  },
+  "MultiXactOffsetSLRU": {
+    "type": "MultiXactOffsetSLRU",
+    "class": "LWLock",
+    "description": "Waiting to access the multixact offset SLRU cache.",
+    "color": "#ae95a2"
+  },
+  "MultiXactTruncation": {
+    "type": "MultiXactTruncation",
+    "class": "LWLock",
+    "description": "Waiting to read or truncate multixact information.",
+    "color": "#b9aff5"
+  },
+  "NotifyBuffer": {
+    "type": "NotifyBuffer",
+    "class": "LWLock",
+    "description": "Waiting for I/O on a NOTIFY message SLRU buffer.",
+    "color": "#99e3b1"
+  },
+  "NotifyQueue": {
+    "type": "NotifyQueue",
+    "class": "LWLock",
+    "description": "Waiting to read or update NOTIFY messages.",
+    "color": "#d9f8fe"
+  },
+  "NotifyQueueTail": {
+    "type": "NotifyQueueTail",
+    "class": "LWLock",
+    "description": "Waiting to update limit on NOTIFY message storage.",
+    "color": "#dcb3c9"
+  },
+  "NotifySLRU": {
+    "type": "NotifySLRU",
+    "class": "LWLock",
+    "description": "Waiting to access the NOTIFY message SLRU cache.",
+    "color": "#cd8e8b"
+  },
+  "OidGen": {
+    "type": "OidGen",
+    "class": "LWLock",
+    "description": "Waiting to allocate a new OID.",
+    "color": "#e4a597"
+  },
+  "OldSnapshotTimeMap": {
+    "type": "OldSnapshotTimeMap",
+    "class": "LWLock",
+    "description": "Waiting to read or update old snapshot control information.",
+    "color": "#c5bece"
+  },
+  "ParallelAppend": {
+    "type": "ParallelAppend",
+    "class": "LWLock",
+    "description": "Waiting to choose the next subplan during Parallel Append plan execution.",
+    "color": "#8ef9ac"
+  },
+  "ParallelBitmapScan": {
+    "type": "ParallelBitmapScan",
+    "class": "IPC",
+    "description": "Waiting for parallel bitmap scan to become initialized.",
+    "color": "#e3f480"
+  },
+  "ParallelCreateIndexScan": {
+    "type": "ParallelCreateIndexScan",
+    "class": "IPC",
+    "description": "Waiting for parallel CREATE INDEX workers to finish heap scan.",
+    "color": "#99f7f9"
+  },
+  "ParallelFinish": {
+    "type": "ParallelFinish",
+    "class": "IPC",
+    "description": "Waiting for parallel workers to finish computing.",
+    "color": "#f6e5b9"
+  },
+  "ParallelHashJoin": {
+    "type": "ParallelHashJoin",
+    "class": "LWLock",
+    "description": "Waiting to synchronize workers during Parallel Hash Join plan execution.",
+    "color": "#adc7b1"
+  },
+  "ParallelQueryDSA": {
+    "type": "ParallelQueryDSA",
+    "class": "LWLock",
+    "description": "Waiting for parallel query dynamic shared memory allocation.",
+    "color": "#cae591"
+  },
+  "PerSessionDSA": {
+    "type": "PerSessionDSA",
+    "class": "LWLock",
+    "description": "Waiting for parallel query dynamic shared memory allocation.",
+    "color": "#c1f9ac"
+  },
+  "PerSessionRecordType": {
+    "type": "PerSessionRecordType",
+    "class": "LWLock",
+    "description": "Waiting to access a parallel query's information about composite types.",
+    "color": "#f4bffe"
+  },
+  "PerSessionRecordTypmod": {
+    "type": "PerSessionRecordTypmod",
+    "class": "LWLock",
+    "description": "Waiting to access a parallel query's information about type modifiers that identify anonymous record types.",
+    "color": "#9cb5e2"
+  },
+  "PerXactPredicateList": {
+    "type": "PerXactPredicateList",
+    "class": "LWLock",
+    "description": "Waiting to access the list of predicate locks held by the current serializable transaction during a parallel query.",
+    "color": "#e9b8ea"
+  },
+  "PgSleep": {
+    "type": "PgSleep",
+    "class": "Timeout",
+    "description": "Waiting due to a call to pg_sleep or a sibling function.",
+    "color": "#e8dff4"
+  },
+  "PgStatMain": {
+    "type": "PgStatMain",
+    "class": "Activity",
+    "description": "Waiting in main loop of statistics collector process.",
+    "color": "#d18bde"
+  },
+  "PredicateLockManager": {
+    "type": "PredicateLockManager",
+    "class": "LWLock",
+    "description": "Waiting to access predicate lock information used by serializable transactions.",
+    "color": "#98d188"
+  },
+  "ProcArray": {
+    "type": "ProcArray",
+    "class": "LWLock",
+    "description": "Waiting to access the shared per-process data structures (typically, to get a snapshot or report a session's transaction ID).",
+    "color": "#8abba3"
+  },
+  "ProcArrayGroupUpdate": {
+    "type": "ProcArrayGroupUpdate",
+    "class": "IPC",
+    "description": "Waiting for the group leader to clear the transaction ID at end of a parallel operation.",
+    "color": "#c5bfe5"
+  },
+  "ProcSignalBarrier": {
+    "type": "ProcSignalBarrier",
+    "class": "IPC",
+    "description": "Waiting for a barrier event to be processed by all backends.",
+    "color": "#b98df6"
+  },
+  "Promote": {
+    "type": "Promote",
+    "class": "IPC",
+    "description": "Waiting for standby promotion.",
+    "color": "#d791e5"
+  },
+  "RecoveryApplyDelay": {
+    "type": "RecoveryApplyDelay",
+    "class": "Timeout",
+    "description": "Waiting to apply WAL during recovery because of a delay setting.",
+    "color": "#8ad0dd"
+  },
+  "RecoveryConflictSnapshot": {
+    "type": "RecoveryConflictSnapshot",
+    "class": "IPC",
+    "description": "Waiting for recovery conflict resolution for a vacuum cleanup.",
+    "color": "#b499b1"
+  },
+  "RecoveryConflictTablespace": {
+    "type": "RecoveryConflictTablespace",
+    "class": "IPC",
+    "description": "Waiting for recovery conflict resolution for dropping a tablespace.",
+    "color": "#b1daab"
+  },
+  "RecoveryPause": {
+    "type": "RecoveryPause",
+    "class": "IPC",
+    "description": "Waiting for recovery to be resumed.",
+    "color": "#b0e0f3"
+  },
+  "RecoveryRetrieveRetryInterval": {
+    "type": "RecoveryRetrieveRetryInterval",
+    "class": "Timeout",
+    "description": "Waiting during recovery when WAL data is not available from any source (pg_wal, archive or stream).",
+    "color": "#e382dc"
+  },
+  "RecoveryWalStream": {
+    "type": "RecoveryWalStream",
+    "class": "Activity",
+    "description": "Waiting in main loop of startup process for WAL to arrive, during streaming recovery.",
+    "color": "#80cdbb"
+  },
+  "RegisterSyncRequest": {
+    "type": "RegisterSyncRequest",
+    "class": "Timeout",
+    "description": "Waiting while sending synchronization requests to the checkpointer, because the request queue is full.",
+    "color": "#a888b1"
+  },
+  "RelCacheInit": {
+    "type": "RelCacheInit",
+    "class": "LWLock",
+    "description": "Waiting to read or update a pg_internal.init relation cache initialization file.",
+    "color": "#aedae8"
+  },
+  "RelationMapRead": {
+    "type": "RelationMapRead",
+    "class": "IO",
+    "description": "Waiting for a read of the relation map file.",
+    "color": "#bbfaea"
+  },
+  "RelationMapSync": {
+    "type": "RelationMapSync",
+    "class": "IO",
+    "description": "Waiting for the relation map file to reach durable storage.",
+    "color": "#89ba94"
+  },
+  "RelationMapWrite": {
+    "type": "RelationMapWrite",
+    "class": "IO",
+    "description": "Waiting for a write to the relation map file.",
+    "color": "#eedcc7"
+  },
+  "RelationMapping": {
+    "type": "RelationMapping",
+    "class": "LWLock",
+    "description": "Waiting to read or update a pg_filenode.map file (used to track the filenode assignments of certain system catalogs).",
+    "color": "#92f0af"
+  },
+  "ReorderBufferRead": {
+    "type": "ReorderBufferRead",
+    "class": "IO",
+    "description": "Waiting for a read during reorder buffer management.",
+    "color": "#8b87b3"
+  },
+  "ReorderBufferWrite": {
+    "type": "ReorderBufferWrite",
+    "class": "IO",
+    "description": "Waiting for a write during reorder buffer management.",
+    "color": "#e0f5d2"
+  },
+  "ReorderLogicalMappingRead": {
+    "type": "ReorderLogicalMappingRead",
+    "class": "IO",
+    "description": "Waiting for a read of a logical mapping during reorder buffer management.",
+    "color": "#c398a1"
+  },
+  "ReplicationOrigin": {
+    "type": "ReplicationOrigin",
+    "class": "LWLock",
+    "description": "Waiting to create, drop or use a replication origin.",
+    "color": "#f099c5"
+  },
+  "ReplicationOriginDrop": {
+    "type": "ReplicationOriginDrop",
+    "class": "IPC",
+    "description": "Waiting for a replication origin to become inactive so it can be dropped.",
+    "color": "#d1eadc"
+  },
+  "ReplicationOriginState": {
+    "type": "ReplicationOriginState",
+    "class": "LWLock",
+    "description": "Waiting to read or update the progress of one replication origin.",
+    "color": "#9e8eaf"
+  },
+  "ReplicationSlotAllocation": {
+    "type": "ReplicationSlotAllocation",
+    "class": "LWLock",
+    "description": "Waiting to allocate or free a replication slot.",
+    "color": "#eaafd1"
+  },
+  "ReplicationSlotControl": {
+    "type": "ReplicationSlotControl",
+    "class": "LWLock",
+    "description": "Waiting to read or update replication slot state.",
+    "color": "#d1b8d3"
+  },
+  "ReplicationSlotDrop": {
+    "type": "ReplicationSlotDrop",
+    "class": "IPC",
+    "description": "Waiting for a replication slot to become inactive so it can be dropped.",
+    "color": "#f8dee1"
+  },
+  "ReplicationSlotIO": {
+    "type": "ReplicationSlotIO",
+    "class": "LWLock",
+    "description": "Waiting for I/O on a replication slot.",
+    "color": "#8980bf"
+  },
+  "ReplicationSlotRead": {
+    "type": "ReplicationSlotRead",
+    "class": "IO",
+    "description": "Waiting for a read from a replication slot control file.",
+    "color": "#b88df0"
+  },
+  "ReplicationSlotRestoreSync": {
+    "type": "ReplicationSlotRestoreSync",
+    "class": "IO",
+    "description": "Waiting for a replication slot control file to reach durable storage while restoring it to memory.",
+    "color": "#a1dce4"
+  },
+  "ReplicationSlotSync": {
+    "type": "ReplicationSlotSync",
+    "class": "IO",
+    "description": "Waiting for a replication slot control file to reach durable storage.",
+    "color": "#ec8893"
+  },
+  "ReplicationSlotWrite": {
+    "type": "ReplicationSlotWrite",
+    "class": "IO",
+    "description": "Waiting for a write to a replication slot control file.",
+    "color": "#a09add"
+  },
+  "SInvalRead": {
+    "type": "SInvalRead",
+    "class": "LWLock",
+    "description": "Waiting to retrieve messages from the shared catalog invalidation queue.",
+    "color": "#eac3de"
+  },
+  "SInvalWrite": {
+    "type": "SInvalWrite",
+    "class": "LWLock",
+    "description": "Waiting to add a message to the shared catalog invalidation queue.",
+    "color": "#f2bcc2"
+  },
+  "SLRUFlushSync": {
+    "type": "SLRUFlushSync",
+    "class": "IO",
+    "description": "Waiting for SLRU data to reach durable storage during a checkpoint or database shutdown.",
+    "color": "#bf9da5"
+  },
+  "SLRURead": {
+    "type": "SLRURead",
+    "class": "IO",
+    "description": "Waiting for a read of an SLRU page.",
+    "color": "#d48ccc"
+  },
+  "SLRUSync": {
+    "type": "SLRUSync",
+    "class": "IO",
+    "description": "Waiting for SLRU data to reach durable storage following a page write.",
+    "color": "#80a6c5"
+  },
+  "SLRUWrite": {
+    "type": "SLRUWrite",
+    "class": "IO",
+    "description": "Waiting for a write of an SLRU page.",
+    "color": "#e1a49a"
+  },
+  "SSLOpenServer": {
+    "type": "SSLOpenServer",
+    "class": "Client",
+    "description": "Waiting for SSL while attempting connection.",
+    "color": "#e691c9"
+  },
+  "SafeSnapshot": {
+    "type": "SafeSnapshot",
+    "class": "IPC",
+    "description": "Waiting to obtain a valid snapshot for a READ ONLY DEFERRABLE transaction.",
+    "color": "#83af8f"
+  },
+  "SerialBuffer": {
+    "type": "SerialBuffer",
+    "class": "LWLock",
+    "description": "Waiting for I/O on a serializable transaction conflict SLRU buffer.",
+    "color": "#b49ae9"
+  },
+  "SerialSLRU": {
+    "type": "SerialSLRU",
+    "class": "LWLock",
+    "description": "Waiting to access the serializable transaction conflict SLRU cache.",
+    "color": "#e997d2"
+  },
+  "SerializableFinishedList": {
+    "type": "SerializableFinishedList",
+    "class": "LWLock",
+    "description": "Waiting to access the list of finished serializable transactions.",
+    "color": "#da9cb4"
+  },
+  "SerializablePredicateList": {
+    "type": "SerializablePredicateList",
+    "class": "LWLock",
+    "description": "Waiting to access the list of predicate locks held by serializable transactions.",
+    "color": "#c1c792"
+  },
+  "SerializableXactHash": {
+    "type": "SerializableXactHash",
+    "class": "LWLock",
+    "description": "Waiting to read or update information about serializable transactions.",
+    "color": "#d49bbe"
+  },
+  "SharedTidBitmap": {
+    "type": "SharedTidBitmap",
+    "class": "LWLock",
+    "description": "Waiting to access a shared TID bitmap during a parallel bitmap index scan.",
+    "color": "#e7b2cc"
+  },
+  "SharedTupleStore": {
+    "type": "SharedTupleStore",
+    "class": "LWLock",
+    "description": "Waiting to access a shared tuple store during parallel query.",
+    "color": "#dae2ed"
+  },
+  "ShmemIndex": {
+    "type": "ShmemIndex",
+    "class": "LWLock",
+    "description": "Waiting to find or allocate space in shared memory.",
+    "color": "#8af7f1"
+  },
+  "SnapbuildRead": {
+    "type": "SnapbuildRead",
+    "class": "IO",
+    "description": "Waiting for a read of a serialized historical catalog snapshot.",
+    "color": "#bf86e9"
+  },
+  "SnapbuildSync": {
+    "type": "SnapbuildSync",
+    "class": "IO",
+    "description": "Waiting for a serialized historical catalog snapshot to reach durable storage.",
+    "color": "#c8b4b7"
+  },
+  "SnapbuildWrite": {
+    "type": "SnapbuildWrite",
+    "class": "IO",
+    "description": "Waiting for a write of a serialized historical catalog snapshot.",
+    "color": "#f0e7d9"
+  },
+  "SubtransBuffer": {
+    "type": "SubtransBuffer",
+    "class": "LWLock",
+    "description": "Waiting for I/O on a sub-transaction SLRU buffer.",
+    "color": "#e99098"
+  },
+  "SubtransSLRU": {
+    "type": "SubtransSLRU",
+    "class": "LWLock",
+    "description": "Waiting to access the sub-transaction SLRU cache.",
+    "color": "#ddd2e4"
+  },
+  "SyncRep": {
+    "type": "SyncRep",
+    "class": "LWLock",
+    "description": "Waiting to read or update information about the state of synchronous replication.",
+    "color": "#9ad993"
+  },
+  "SyncScan": {
+    "type": "SyncScan",
+    "class": "LWLock",
+    "description": "Waiting to select the starting location of a synchronized table scan.",
+    "color": "#c6a8ab"
+  },
+  "SysLoggerMain": {
+    "type": "SysLoggerMain",
+    "class": "Activity",
+    "description": "Waiting in main loop of syslogger process.",
+    "color": "#a8f790"
+  },
+  "TablespaceCreate": {
+    "type": "TablespaceCreate",
+    "class": "LWLock",
+    "description": "Waiting to create or drop a tablespace.",
+    "color": "#bc8292"
+  },
+  "TimelineHistoryFileSync": {
+    "type": "TimelineHistoryFileSync",
+    "class": "IO",
+    "description": "Waiting for a timeline history file received via streaming replication to reach durable storage.",
+    "color": "#c895a6"
+  },
+  "TimelineHistoryFileWrite": {
+    "type": "TimelineHistoryFileWrite",
+    "class": "IO",
+    "description": "Waiting for a write of a timeline history file received via streaming replication.",
+    "color": "#9583e2"
+  },
+  "TimelineHistoryRead": {
+    "type": "TimelineHistoryRead",
+    "class": "IO",
+    "description": "Waiting for a read of a timeline history file.",
+    "color": "#abad9b"
+  },
+  "TimelineHistorySync": {
+    "type": "TimelineHistorySync",
+    "class": "IO",
+    "description": "Waiting for a newly created timeline history file to reach durable storage.",
+    "color": "#c1bed0"
+  },
+  "TimelineHistoryWrite": {
+    "type": "TimelineHistoryWrite",
+    "class": "IO",
+    "description": "Waiting for a write of a newly created timeline history file.",
+    "color": "#f5cec4"
+  },
+  "TwoPhaseState": {
+    "type": "TwoPhaseState",
+    "class": "LWLock",
+    "description": "Waiting to read or update the state of prepared transactions.",
+    "color": "#f4babb"
+  },
+  "TwophaseFileRead": {
+    "type": "TwophaseFileRead",
+    "class": "IO",
+    "description": "Waiting for a read of a two phase state file.",
+    "color": "#bda6af"
+  },
+  "TwophaseFileSync": {
+    "type": "TwophaseFileSync",
+    "class": "IO",
+    "description": "Waiting for a two phase state file to reach durable storage.",
+    "color": "#bda69a"
+  },
+  "TwophaseFileWrite": {
+    "type": "TwophaseFileWrite",
+    "class": "IO",
+    "description": "Waiting for a write of a two phase state file.",
+    "color": "#acd4a5"
+  },
+  "VacuumDelay": {
+    "type": "VacuumDelay",
+    "class": "Timeout",
+    "description": "Waiting in a cost-based vacuum delay point.",
+    "color": "#a19eea"
+  },
+  "WALBootstrapSync": {
+    "type": "WALBootstrapSync",
+    "class": "IO",
+    "description": "Waiting for WAL to reach durable storage during bootstrapping.",
+    "color": "#cbaaef"
+  },
+  "WALBootstrapWrite": {
+    "type": "WALBootstrapWrite",
+    "class": "IO",
+    "description": "Waiting for a write of a WAL page during bootstrapping.",
+    "color": "#9fb2b3"
+  },
+  "WALBufMapping": {
+    "type": "WALBufMapping",
+    "class": "LWLock",
+    "description": "Waiting to replace a page in WAL buffers.",
+    "color": "#efcca8"
+  },
+  "WALCopyRead": {
+    "type": "WALCopyRead",
+    "class": "IO",
+    "description": "Waiting for a read when creating a new WAL segment by copying an existing one.",
+    "color": "#81e7ea"
+  },
+  "WALCopySync": {
+    "type": "WALCopySync",
+    "class": "IO",
+    "description": "Waiting for a new WAL segment created by copying an existing one to reach durable storage.",
+    "color": "#e3f980"
+  },
+  "WALCopyWrite": {
+    "type": "WALCopyWrite",
+    "class": "IO",
+    "description": "Waiting for a write when creating a new WAL segment by copying an existing one.",
+    "color": "#e890b0"
+  },
+  "WALInitSync": {
+    "type": "WALInitSync",
+    "class": "IO",
+    "description": "Waiting for a newly initialized WAL file to reach durable storage.",
+    "color": "#e182cb"
+  },
+  "WALInitWrite": {
+    "type": "WALInitWrite",
+    "class": "IO",
+    "description": "Waiting for a write while initializing a new WAL file.",
+    "color": "#8db392"
+  },
+  "WALInsert": {
+    "type": "WALInsert",
+    "class": "LWLock",
+    "description": "Waiting to insert WAL data into a memory buffer.",
+    "color": "#a7dd9f"
+  },
+  "WALRead": {
+    "type": "WALRead",
+    "class": "IO",
+    "description": "Waiting for a read from a WAL file.",
+    "color": "#e3e3ce"
+  },
+  "WALSenderTimelineHistoryRead": {
+    "type": "WALSenderTimelineHistoryRead",
+    "class": "IO",
+    "description": "Waiting for a read from a timeline history file during a walsender timeline command.",
+    "color": "#f9bb99"
+  },
+  "WALSync": {
+    "type": "WALSync",
+    "class": "IO",
+    "description": "Waiting for a WAL file to reach durable storage.",
+    "color": "#fba9de"
+  },
+  "WALSyncMethodAssign": {
+    "type": "WALSyncMethodAssign",
+    "class": "IO",
+    "description": "Waiting for data to reach durable storage while assigning a new WAL sync method.",
+    "color": "#b4f8f0"
+  },
+  "WALWrite": {
+    "type": "WALWrite",
+    "class": "LWLock",
+    "description": "Waiting for WAL buffers to be written to disk.",
+    "color": "#e397e3"
+  },
+  "WalReceiverExit": {
+    "type": "WalReceiverExit",
+    "class": "IPC",
+    "description": "Waiting for the WAL receiver to exit.",
+    "color": "#a898d8"
+  },
+  "WalReceiverMain": {
+    "type": "WalReceiverMain",
+    "class": "Activity",
+    "description": "Waiting in main loop of WAL receiver process.",
+    "color": "#d293e4"
+  },
+  "WalReceiverWaitStart": {
+    "type": "WalReceiverWaitStart",
+    "class": "IPC",
+    "description": "Waiting for startup process to send initial data for streaming replication.",
+    "color": "#c3a9a4"
+  },
+  "WalSenderMain": {
+    "type": "WalSenderMain",
+    "class": "Activity",
+    "description": "Waiting in main loop of WAL sender process.",
+    "color": "#fd97e2"
+  },
+  "WalSenderWaitForWAL": {
+    "type": "WalSenderWaitForWAL",
+    "class": "Client",
+    "description": "Waiting for WAL to be flushed in WAL sender process.",
+    "color": "#c986a5"
+  },
+  "WalSenderWriteData": {
+    "type": "WalSenderWriteData",
+    "class": "Client",
+    "description": "Waiting for any activity when processing replies from WAL receiver in WAL sender process.",
+    "color": "#97bfb9"
+  },
+  "WalWriterMain": {
+    "type": "WalWriterMain",
+    "class": "Activity",
+    "description": "Waiting in main loop of WAL writer process.",
+    "color": "#b5e2a3"
+  },
+  "WrapLimitsVacuum": {
+    "type": "WrapLimitsVacuum",
+    "class": "LWLock",
+    "description": "Waiting to update limits on transaction id and multixact consumption.",
+    "color": "#e3d189"
+  },
+  "XactBuffer": {
+    "type": "XactBuffer",
+    "class": "LWLock",
+    "description": "Waiting for I/O on a transaction status SLRU buffer.",
+    "color": "#b682b3"
+  },
+  "XactGroupUpdate": {
+    "type": "XactGroupUpdate",
+    "class": "IPC",
+    "description": "Waiting for the group leader to update transaction status at end of a parallel operation.",
+    "color": "#fce6c1"
+  },
+  "XactSLRU": {
+    "type": "XactSLRU",
+    "class": "LWLock",
+    "description": "Waiting to access the transaction status SLRU cache.",
+    "color": "#9ca4b3"
+  },
+  "XactTruncation": {
+    "type": "XactTruncation",
+    "class": "LWLock",
+    "description": "Waiting to execute pg_xact_status or update the oldest transaction ID available to it.",
+    "color": "#e285c2"
+  },
+  "XidGen": {
+    "type": "XidGen",
+    "class": "LWLock",
+    "description": "Waiting to allocate a new transaction ID.",
+    "color": "#ac9e8a"
+  },
+  "advisory": {
+    "type": "advisory",
+    "class": "Lock",
+    "description": "Waiting to acquire an advisory user lock.",
+    "color": "#84fc92"
+  },
+  "extend": {
+    "type": "extend",
+    "class": "Lock",
+    "description": "Waiting to extend a relation.",
+    "color": "#b3e2fb"
+  },
+  "frozenid": {
+    "type": "frozenid",
+    "class": "Lock",
+    "description": "Waiting to update pg_database.datfrozenxid and pg_database.datminmxid.",
+    "color": "#8591f4"
+  },
+  "object": {
+    "type": "object",
+    "class": "Lock",
+    "description": "Waiting to acquire a lock on a non-relation database object.",
+    "color": "#def6d8"
+  },
+  "page": {
+    "type": "page",
+    "class": "Lock",
+    "description": "Waiting to acquire a lock on a page of a relation.",
+    "color": "#f993d9"
+  },
+  "relation": {
+    "type": "relation",
+    "class": "Lock",
+    "description": "Waiting to acquire a lock on a relation.",
+    "color": "#e3eabf"
+  },
+  "spectoken": {
+    "type": "spectoken",
+    "class": "Lock",
+    "description": "Waiting to acquire a speculative insertion lock.",
+    "color": "#faa981"
+  },
+  "transactionid": {
+    "type": "transactionid",
+    "class": "Lock",
+    "description": "Waiting for a transaction to finish.",
+    "color": "#88e3f1"
+  },
+  "tuple": {
+    "type": "tuple",
+    "class": "Lock",
+    "description": "Waiting to acquire a lock on a tuple.",
+    "color": "#a3828c"
+  },
+  "userlock": {
+    "type": "userlock",
+    "class": "Lock",
+    "description": "Waiting to acquire a user lock.",
+    "color": "#de9dd1"
+  },
+  "virtualxid": {
+    "type": "virtualxid",
+    "class": "Lock",
+    "description": "Waiting to acquire a virtual transaction ID lock.",
+    "color": "#ad9afc"
+  }
+}
