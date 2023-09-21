@@ -2,29 +2,64 @@ package info
 
 import (
 	"context"
-	"github.com/borealisdb/commons/credentials"
+	"fmt"
 	"github.com/sirupsen/logrus"
+	"net"
+	"postgres-explain/backend/cache"
 	"postgres-explain/proto"
 )
 
 type Service struct {
-	log                 *logrus.Entry
-	Repo                Repository
-	credentialsProvider credentials.Credentials
+	log         *logrus.Entry
+	cacheClient *cache.Client
+
 	proto.InfoServer
 }
 
 func (aps *Service) GetClusterInstances(ctx context.Context, request *proto.GetClusterInstancesRequest) (*proto.GetClusterInstancesResponse, error) {
-	//TODO implement me
-	panic("implement me")
+	instances, err := aps.cacheClient.GetClusterInstances(ctx, request.ClusterName)
+	if err != nil {
+		return &proto.GetClusterInstancesResponse{}, fmt.Errorf("could not GetClusterInstances: %v", err)
+	}
+
+	var instancesProto []*proto.Instance
+	for _, instance := range instances {
+		hostname, port, err := net.SplitHostPort(instance.Host)
+		if err != nil {
+			return &proto.GetClusterInstancesResponse{}, fmt.Errorf("could not SplitHostPort: %v", err)
+		}
+
+		instancesProto = append(instancesProto, &proto.Instance{
+			Id:          instance.Name,
+			Name:        instance.Name,
+			Hostname:    hostname,
+			Port:        port,
+			Status:      "",
+			StatusError: "",
+		})
+	}
+
+	return &proto.GetClusterInstancesResponse{Instances: instancesProto}, nil
 }
 
 func (aps *Service) GetClusters(ctx context.Context, in *proto.GetClustersRequest) (*proto.GetClustersResponse, error) {
-	clusters, err := aps.Repo.GetActiveClusters(ctx)
+	clusters, err := aps.cacheClient.GetClusters(ctx)
 	if err != nil {
-		return nil, err
+		return &proto.GetClustersResponse{}, err
 	}
+
+	clustersProto := make([]*proto.Cluster, 0)
+	for _, name := range clusters {
+		cluster := &proto.Cluster{
+			Id:     name,
+			Name:   name,
+			Status: statusOnline,
+		}
+
+		clustersProto = append(clustersProto, cluster)
+	}
+
 	return &proto.GetClustersResponse{
-		Clusters: clusters,
+		Clusters: clustersProto,
 	}, nil
 }

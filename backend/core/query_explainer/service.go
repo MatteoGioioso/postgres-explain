@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"github.com/borealisdb/commons/credentials"
 	"github.com/borealisdb/commons/postgresql"
-	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	"github.com/matoous/go-nanoid/v2"
 	pg_query "github.com/pganalyze/pg_query_go/v4"
@@ -34,7 +33,6 @@ func (aps *Service) GetQueryPlansList(ctx context.Context, request *proto.GetQue
 		Limit:            int(request.Limit),
 		Order:            request.Order,
 		QueryFingerprint: request.QueryFingerprint,
-		TrackingId:       request.TrackingId,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("could not GetPlansList: %v", err)
@@ -47,7 +45,6 @@ func (aps *Service) GetQueryPlansList(ctx context.Context, request *proto.GetQue
 			Alias:       entity.Alias.String,
 			PeriodStart: timestamppb.New(entity.PeriodStart),
 			Query:       entity.Query,
-			TrackingId:  entity.TrackingID,
 		})
 	}
 
@@ -123,7 +120,6 @@ func (aps *Service) SaveQueryPlan(ctx context.Context, request *proto.SaveQueryP
 		Alias:            shared.ToSqlNullString(request.Alias),
 		Query:            planRequest.Query,
 		PlanID:           planId,
-		TrackingID:       uuid.New().String(),
 		QueryID:          shared.ToSqlNullString(planRequest.QueryID),
 		QueryFingerprint: fingerprint,
 		OriginalPlan:     plan,

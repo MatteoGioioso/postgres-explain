@@ -40,10 +40,10 @@ func (s Service) GetQueriesList(ctx context.Context, request *proto.GetQueriesLi
 			return nil, fmt.Errorf("could not calculate query Fingerprint %v", err)
 		}
 
-		mts := make([]*proto.MetricValues, 0)
+		mts := make(map[string]*proto.MetricValues)
 		for _, mapping := range MetricsMappingsSimple {
 			value := metrics[mapping.Key]
-			mts = append(mts, &proto.MetricValues{Value: convertMetricValueToFloat32(value)})
+			mts[mapping.Key] = &proto.MetricValues{Sum: convertMetricValueToFloat32(value)}
 		}
 
 		queries = append(queries, &proto.Query{

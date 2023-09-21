@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/google/uuid"
 	"github.com/matoous/go-nanoid/v2"
 	pg_query "github.com/pganalyze/pg_query_go/v4"
 	"github.com/sirupsen/logrus"
@@ -23,15 +22,49 @@ type Service struct {
 	proto.QueryExplainerServer
 }
 
-func (aps *Service) GetQueryPlansList(ctx context.Context, request *proto.GetQueryPlansListRequest) (*proto.GetQueryPlansListResponse, error) {
-	list, err := aps.Repo.GetPlansList(ctx, PlansSearchRequest{
+func (aps *Service) GetOptimizationsList(ctx context.Context, request *proto.GetOptimizationsListRequest) (*proto.GetOptimizationsListResponse, error) {
+	list, err := aps.Repo.GetOptimizations(ctx, PlansSearchRequest{
 		PeriodStartFrom:  request.PeriodStartFrom.AsTime(),
 		PeriodStartTo:    request.PeriodStartTo.AsTime(),
 		ClusterName:      request.ClusterName,
 		Limit:            int(request.Limit),
 		Order:            request.Order,
 		QueryFingerprint: request.QueryFingerprint,
-		TrackingId:       request.TrackingId,
+		OptimizationId:   request.OptimizationId,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("could not GetPlansList: %v", err)
+	}
+	
+	items := make([]*proto.PlanItem, 0)
+	for _, entity := range list {
+		var plan pkg.Explained
+		if err := json.Unmarshal([]byte(entity.Plan), &plan); err != nil {
+			return nil, fmt.Errorf("could not Unmarshal to pkg.Explained: %v", err)
+		}
+
+		items = append(items, &proto.PlanItem{
+			Id:               entity.PlanID,
+			Alias:            entity.Alias.String,
+			PeriodStart:      timestamppb.New(entity.PeriodStart),
+			Query:            entity.Query,
+			OptimizationId:   entity.OptimizationId,
+			QueryFingerprint: entity.QueryFingerprint,
+			ExecutionTime:    float32(plan.Stats.ExecutionTime),
+			PlanningTime:     float32(plan.Stats.PlanningTime),
+		})
+	}
+
+	return &proto.GetOptimizationsListResponse{Plans: items}, nil
+}
+
+func (aps *Service) GetQueryPlansList(ctx context.Context, request *proto.GetQueryPlansListRequest) (*proto.GetQueryPlansListResponse, error) {
+	list, err := aps.Repo.GetPlansList(ctx, PlansSearchRequest{
+		PeriodStartFrom: request.PeriodStartFrom.AsTime(),
+		PeriodStartTo:   request.PeriodStartTo.AsTime(),
+		ClusterName:     request.ClusterName,
+		Limit:           int(request.Limit),
+		Order:           request.Order,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("could not GetPlansList: %v", err)
@@ -44,7 +77,6 @@ func (aps *Service) GetQueryPlansList(ctx context.Context, request *proto.GetQue
 			Alias:       entity.Alias.String,
 			PeriodStart: timestamppb.New(entity.PeriodStart),
 			Query:       entity.Query,
-			TrackingId:  entity.TrackingID,
 		})
 	}
 
@@ -100,11 +132,10 @@ func (aps *Service) SaveQueryPlan(ctx context.Context, request *proto.SaveQueryP
 		Alias:            shared.ToSqlNullString(request.Alias),
 		Query:            planRequest.Query,
 		PlanID:           planId,
-		TrackingID:       uuid.New().String(),
 		QueryID:          shared.ToSqlNullString(planRequest.QueryId),
 		QueryFingerprint: fingerprint,
 		OriginalPlan:     plan.Plan,
-		ClusterName:      "",
+		ClusterName:      request.ClusterName,
 		Database:         planRequest.Database,
 		Plan:             string(marshalPlan),
 		PeriodStart:      time.Now(),
@@ -138,6 +169,7 @@ func (aps *Service) GetQueryPlan(ctx context.Context, request *proto.GetQueryPla
 		QueryFingerprint:  plan.QueryFingerprint,
 		Query:             plan.Query,
 		PeriodStart:       timestamppb.New(plan.PeriodStart),
+		OptimizationId:    plan.OptimizationId,
 	}, err
 }
 

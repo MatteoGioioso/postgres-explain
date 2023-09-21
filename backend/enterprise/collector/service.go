@@ -16,7 +16,7 @@ type Service struct {
 }
 
 func (s Service) Register(ctx context.Context, request *proto.RegisterRequest) (*proto.RegisterResponse, error) {
-	s.log.Infof("received registration from instance %v", request.InstanceName)
+	s.log.Infof("received registration from cluster %v and instance %v", request.ClusterName, request.InstanceName)
 
 	if err := s.cacheClient.SetInstance(ctx, cache.Instance{
 		ClusterName:   request.ClusterName,
@@ -24,8 +24,8 @@ func (s Service) Register(ctx context.Context, request *proto.RegisterRequest) (
 		Host:          request.InstanceHost,
 		CollectorHost: request.CollectorHost,
 	}); err != nil {
-		return nil, fmt.Errorf("could not SetInstance in cache: %v", err)
+		return &proto.RegisterResponse{}, fmt.Errorf("could not SetInstance in cache: %v", err)
 	}
 
-	return nil, nil
+	return &proto.RegisterResponse{}, nil
 }

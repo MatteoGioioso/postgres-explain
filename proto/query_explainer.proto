@@ -28,6 +28,13 @@ service QueryExplainer {
       body: "*"
     };
   };
+
+  rpc GetOptimizationsList(GetOptimizationsListRequest) returns (GetOptimizationsListResponse) {
+    option (google.api.http) = {
+      post: "/v0/explain/GetOptimizationsList"
+      body: "*"
+    };
+  };
 }
 
 message SaveQueryPlanRequest {
@@ -59,6 +66,7 @@ message GetQueryPlanResponse {
   string query_plan = 1;
   string query_original_plan = 3;
   string query_fingerprint = 5;
+  string optimization_id = 10;
   string query = 7;
   google.protobuf.Timestamp period_start = 8;
   string alias = 9;
@@ -70,11 +78,23 @@ message GetQueryPlansListRequest {
   string cluster_name = 3;
   int64 limit = 4;
   string order = 5;
-  string query_fingerprint = 6;
-  string tracking_id = 7;
 }
 
 message GetQueryPlansListResponse {
+  repeated PlanItem plans = 1;
+}
+
+message GetOptimizationsListRequest {
+  google.protobuf.Timestamp period_start_from = 1;
+  google.protobuf.Timestamp period_start_to = 2;
+  string cluster_name = 3;
+  int64 limit = 4;
+  string order = 5;
+  string query_fingerprint = 6;
+  string optimization_id = 7;
+}
+
+message GetOptimizationsListResponse {
   repeated PlanItem plans = 1;
 }
 
@@ -83,5 +103,8 @@ message PlanItem {
   string alias = 2;
   google.protobuf.Timestamp period_start = 3;
   string query = 4;
-  string tracking_id = 5;
+  string optimization_id = 5;
+  string query_fingerprint = 6;
+  float execution_time = 7;
+  float planning_time = 8;
 }

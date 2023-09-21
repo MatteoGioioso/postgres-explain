@@ -2,6 +2,7 @@ package query_explainer
 
 import (
 	"context"
+	"fmt"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -17,7 +18,7 @@ type CommandsClient struct {
 func (c CommandsClient) Explain(ctx context.Context, clusterName, instanceName string, planRequest *proto.PlanRequest) (*proto.PlanResponse, error) {
 	client, conn, err := c.connectToClient(ctx, clusterName, instanceName)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("could not connectToClient: %v", err)
 	}
 
 	defer conn.Close()
@@ -27,24 +28,27 @@ func (c CommandsClient) Explain(ctx context.Context, clusterName, instanceName s
 		Message:    &proto.CommandRequest_PlanRequest{PlanRequest: planRequest},
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("could not run Command EXPLAIN: %v", err)
 	}
 
 	if commandResponse.ActionType == proto.ActionTypes_EXPLAIN {
 		return commandResponse.GetPlanResponse(), nil
 	}
 
-	return nil, nil
+	return nil, fmt.Errorf("could not retreive response for command EXPLAIN")
 }
 
 func (c CommandsClient) connectToClient(ctx context.Context, clusterName, instanceName string) (proto.CommandsClient, *grpc.ClientConn, error) {
 	instance, err := c.cacheClient.GetInstance(ctx, clusterName, instanceName)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("could not GetInstance: %v", err)
 	}
-	grpcConn, err := grpc.Dial(instance.Host, grpc.WithTransportCredentials(insecure.NewCredentials()))
+
+	c.log.Infof("connecting to collector host %v", instance.CollectorHost)
+
+	grpcConn, err := grpc.Dial(instance.CollectorHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("could not Dial collector %v: %v", instance.CollectorHost, err)
 	}
 
 	return proto.NewCommandsClient(grpcConn), grpcConn, nil

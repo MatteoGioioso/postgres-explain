@@ -25,11 +25,9 @@ func (m *Module) Register(log *logrus.Entry, db *sqlx.DB, credentialsProvider cr
 }
 
 func (m *Module) Init(initArgs modules.InitArgs) error {
-	repository := Repository{credentialsProvider: m.CredentialsProvider, log: m.Log, cacheClient: initArgs.Cache}
 	service := Service{
-		log:                 m.Log,
-		Repo:                repository,
-		credentialsProvider: m.CredentialsProvider,
+		log:         m.Log,
+		cacheClient: initArgs.Cache,
 	}
 
 	proto.RegisterInfoServer(initArgs.GrpcServer, &service)

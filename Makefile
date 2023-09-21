@@ -57,5 +57,11 @@ run.frontend:
 run.web:
 	(cd web && npm run start)
 
-reload.backend: build.backend.core
+reload.core: build.backend.core
 	docker-compose up --build --remove-orphans backend -d
+
+reload.enterprise: build.backend.enterprise
+	docker-compose up --build --remove-orphans backend -d
+
+reload.collector: build.collector
+	docker-compose up --build --remove-orphans collector -d

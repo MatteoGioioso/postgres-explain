@@ -25,7 +25,7 @@ SELECT 	id,
    username,
    cluster,
    period_start,
-   tracking_id
+   optimization_id
 FROM plans
 WHERE id = :plan_id;`
 
@@ -69,7 +69,6 @@ const insertQueryPlan = `
    username,
    cluster,
    period_start,
-   tracking_id,
    optimization_id
    )
 VALUES (
@@ -84,7 +83,6 @@ VALUES (
 	:username,
 	:cluster,
 	:period_start,
-    :tracking_id,
 	:optimization_id
   )
 `
@@ -103,7 +101,7 @@ func (ar Repository) SaveQueryPlan(ctx context.Context, entity PlanEntity) error
 }
 
 const getPlansTmpl = `
-SELECT id, alias, period_start, query, tracking_id 
+SELECT id, alias, period_start, query, optimization_id 
 FROM plans 
 WHERE cluster = :cluster
 ORDER BY :order_by {{ .OrderDir }} 
@@ -111,7 +109,11 @@ LIMIT :limit
 `
 
 func (ar Repository) GetPlansList(ctx context.Context, request PlansSearchRequest) ([]PlanEntity, error) {
-	query, queryArgs, err := shared.ProcessQueryWithTemplate(request.ToTmplArgs(), request.ToQueryArgs(), getPlansTmpl)
+	return ar.getPlansList(ctx, request, getPlansTmpl)
+}
+
+func (ar Repository) getPlansList(ctx context.Context, request PlansSearchRequest, queryTemplate string) ([]PlanEntity, error) {
+	query, queryArgs, err := shared.ProcessQueryWithTemplate(request.ToTmplArgs(), request.ToQueryArgs(), queryTemplate)
 	if err != nil {
 		return nil, fmt.Errorf("could not ProcessQueryWithTemplate: %v", err)
 	}
@@ -139,4 +141,16 @@ func (ar Repository) GetPlansList(ctx context.Context, request PlansSearchReques
 	}
 
 	return plans, nil
+}
+
+const getOptimizationsTmpl = `
+SELECT id, alias, period_start, query, optimization_id, query_fingerprint
+FROM plans 
+WHERE cluster = :cluster AND (query_fingerprint = :query_fingerprint OR optimization_id = :optimization_id)
+ORDER BY :order_by {{ .OrderDir }} 
+LIMIT :limit
+`
+
+func (ar Repository) GetOptimizations(ctx context.Context, request PlansSearchRequest) ([]PlanEntity, error) {
+	return ar.getPlansList(ctx, request, getOptimizationsTmpl)
 }

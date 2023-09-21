@@ -1,8 +1,8 @@
 package enterprise
 
 import (
-	"postgres-explain/backend/core/info"
 	"postgres-explain/backend/enterprise/collector"
+	"postgres-explain/backend/enterprise/info"
 	"postgres-explain/backend/enterprise/query_explainer"
 	"postgres-explain/backend/modules"
 )

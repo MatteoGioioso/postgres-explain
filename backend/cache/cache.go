@@ -5,13 +5,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/eko/gocache/lib/v4/cache"
+	"github.com/eko/gocache/lib/v4/store"
 	gocachestore "github.com/eko/gocache/store/go_cache/v4"
 	gocache "github.com/patrickmn/go-cache"
+	"github.com/pkg/errors"
 	"time"
 )
 
-type Params struct {
-}
+type Params struct{}
 
 type Client struct {
 	client *cache.Cache[[]byte]
@@ -19,8 +20,7 @@ type Client struct {
 
 func New(params Params) (*Client, error) {
 	client := gocache.New(10*time.Minute, 10*time.Minute)
-	store := gocachestore.NewGoCache(client)
-	return &Client{client: cache.New[[]byte](store)}, nil
+	return &Client{client: cache.New[[]byte](gocachestore.NewGoCache(client))}, nil
 }
 
 func (c *Client) SetInstance(ctx context.Context, instance Instance) error {
@@ -28,14 +28,9 @@ func (c *Client) SetInstance(ctx context.Context, instance Instance) error {
 		return fmt.Errorf("could not SetCluster: %v", err)
 	}
 
-	clusterBytes, err := c.client.Get(ctx, c.getInstanceKey(instance.ClusterName))
+	cluster, err := c.getClusterInstances(ctx, instance.ClusterName)
 	if err != nil {
-		return fmt.Errorf("could not Get: %v", err)
-	}
-
-	var cluster map[string]Instance
-	if err := json.Unmarshal(clusterBytes, &cluster); err != nil {
-		return fmt.Errorf("could not Unmarshal: %v", err)
+		return fmt.Errorf("could not getClusterInstances: %v", err)
 	}
 
 	cluster[instance.Name] = instance
@@ -48,46 +43,38 @@ func (c *Client) SetInstance(ctx context.Context, instance Instance) error {
 }
 
 func (c *Client) GetInstance(ctx context.Context, clusterName, name string) (Instance, error) {
-	var cluster map[string]Instance
-
-	get, err := c.client.Get(ctx, c.getInstanceKey(clusterName))
+	cluster, err := c.getClusterInstances(ctx, clusterName)
 	if err != nil {
-		return Instance{}, fmt.Errorf("could not Get: %v", err)
-	}
-
-	if err := json.Unmarshal(get, &cluster); err != nil {
-		return Instance{}, fmt.Errorf("could not Unmarshal: %v", err)
+		return Instance{}, err
 	}
 
 	return cluster[name], nil
 }
 
 func (c *Client) SetCluster(ctx context.Context, clusterName string) error {
-	var clusters map[string]string
-	get, err := c.client.Get(ctx, "clusters")
+	clusters, err := c.GetClusters(ctx)
 	if err != nil {
-		return err
-	}
-
-	if err := json.Unmarshal(get, &clusters); err != nil {
-		return err
+		return fmt.Errorf("could not GetClusters: %v", err)
 	}
 
 	clusters[clusterName] = clusterName
 	marshal, err := json.Marshal(clusters)
 	if err != nil {
-		return err
+		return fmt.Errorf("could not marshal clusters: %v", err)
 	}
 
 	return c.client.Set(ctx, "clusters", marshal)
 }
 
 func (c *Client) GetClusters(ctx context.Context) (map[string]string, error) {
-	var clusters map[string]string
+	clusters := make(map[string]string)
 
 	get, err := c.client.Get(ctx, "clusters")
+	if errors.Is(err, store.NotFound{}) {
+		return clusters, nil
+	}
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("could not Get from cache: %v", err)
 	}
 
 	if err := json.Unmarshal(get, &clusters); err != nil {
@@ -95,6 +82,27 @@ func (c *Client) GetClusters(ctx context.Context) (map[string]string, error) {
 	}
 
 	return clusters, nil
+}
+
+func (c *Client) GetClusterInstances(ctx context.Context, clusterName string) (map[string]Instance, error) {
+	return c.getClusterInstances(ctx, clusterName)
+}
+
+func (c *Client) getClusterInstances(ctx context.Context, clusterName string) (map[string]Instance, error) {
+	instancesMap := make(map[string]Instance)
+	key := c.getInstanceKey(clusterName)
+	get, err := c.client.Get(ctx, key)
+	if errors.Is(err, store.NotFound{}) {
+		return instancesMap, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("could not Get object from cache with key %v: %v", key, err)
+	}
+
+	if err := json.Unmarshal(get, &instancesMap); err != nil {
+		return nil, fmt.Errorf("could not Unmarshal: %v", err)
+	}
+	return instancesMap, nil
 }
 
 func (c *Client) getInstanceKey(clusterName string) string {

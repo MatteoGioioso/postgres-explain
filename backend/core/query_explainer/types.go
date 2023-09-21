@@ -22,7 +22,6 @@ func (p *PlanRequest) paramsFromRequest(params []string) {
 
 type PlanEntity struct {
 	PlanID           string         `json:"id"`
-	TrackingID       string         `json:"tracking_id"`
 	OptimizationId   string         `json:"optimization_id"`
 	Alias            sql.NullString `json:"alias"`
 	Plan             string         `json:"plan"` // Explained object
@@ -43,7 +42,7 @@ type PlansSearchRequest struct {
 	Limit            int       `json:"limit"`
 	Order            string    `json:"order"`
 	QueryFingerprint string    `json:"query_fingerprint"`
-	TrackingId       string    `json:"tracking_id"`
+	OptimizationId   string    `json:"optimization_id"`
 }
 
 func (r PlansSearchRequest) ToQueryArgs() map[string]interface{} {
@@ -60,9 +59,11 @@ func (r PlansSearchRequest) ToQueryArgs() map[string]interface{} {
 	}
 
 	m := map[string]interface{}{
-		"cluster":  r.ClusterName,
-		"order_by": orderByMap[r.Order],
-		"limit":    r.Limit,
+		"cluster":           r.ClusterName,
+		"order_by":          orderByMap[r.Order],
+		"limit":             r.Limit,
+		"query_fingerprint": r.QueryFingerprint,
+		"optimization_id":   r.OptimizationId,
 	}
 
 	return m
