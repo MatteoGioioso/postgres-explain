@@ -104,7 +104,7 @@ const getPlansTmpl = `
 SELECT id, alias, period_start, query, optimization_id, query_fingerprint 
 FROM plans 
 WHERE cluster = :cluster
-ORDER BY :order_by {{ .OrderDir }} 
+ORDER BY {{ .OrderBy}} {{ .OrderDir }} 
 LIMIT :limit
 `
 
@@ -116,7 +116,7 @@ const getOptimizationsTmpl = `
 SELECT id, alias, period_start, query, optimization_id, query_fingerprint, plan
 FROM plans 
 WHERE cluster = :cluster AND (query_fingerprint = :query_fingerprint OR optimization_id = :optimization_id)
-ORDER BY :order_by {{ .OrderDir }} 
+ORDER BY {{ .OrderBy}} {{ .OrderDir }} 
 LIMIT :limit
 `
 

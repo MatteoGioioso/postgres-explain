@@ -31,21 +31,12 @@ type PlansSearchRequest struct {
 }
 
 func (r PlansSearchRequest) ToQueryArgs() map[string]interface{} {
-	orderByMap := map[string]string{
-		"latest": "period_start",
-		"oldest": "period_start",
-	}
-
-	if r.Order == "" {
-		r.Order = "latest"
-	}
 	if r.Limit == 0 {
 		r.Limit = 100
 	}
 
 	m := map[string]interface{}{
 		"cluster":           r.ClusterName,
-		"order_by":          orderByMap[r.Order],
 		"limit":             r.Limit,
 		"query_fingerprint": r.QueryFingerprint,
 		"optimization_id":   r.OptimizationId,
@@ -57,6 +48,12 @@ func (r PlansSearchRequest) ToQueryArgs() map[string]interface{} {
 func (r PlansSearchRequest) ToTmplArgs() interface{} {
 	type tmplArgs struct {
 		OrderDir string
+		OrderBy  string
+	}
+
+	orderByMap := map[string]string{
+		"latest": "period_start",
+		"oldest": "period_start",
 	}
 	orderDirMap := map[string]string{
 		"latest": "DESC",
@@ -69,5 +66,6 @@ func (r PlansSearchRequest) ToTmplArgs() interface{} {
 
 	return tmplArgs{
 		OrderDir: orderDirMap[r.Order],
+		OrderBy:  orderByMap[r.Order],
 	}
 }
