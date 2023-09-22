@@ -35,7 +35,7 @@ func NewService(
 	}
 }
 
-func (aps *Service) GetProfile(ctx context.Context, in *proto.ProfileRequest) (*proto.ProfileReply, error) {
+func (aps *Service) GetProfile(ctx context.Context, in *proto.GetProfileRequest) (*proto.GetProfileResponse, error) {
 	if err := shared.ValidateCommonRequestProps(shared.Validate{
 		PeriodStartFrom: in.PeriodStartFrom,
 		PeriodStartTo:   in.PeriodStartTo,
@@ -51,7 +51,7 @@ func (aps *Service) GetProfile(ctx context.Context, in *proto.ProfileRequest) (*
 	})
 	if err != nil {
 		aps.log.Errorf("error querying clickhouse: %v", err)
-		return &proto.ProfileReply{}, fmt.Errorf("something went wrong")
+		return &proto.GetProfileResponse{}, fmt.Errorf("something went wrong")
 	}
 
 	// TODO document this and maybe optimize
@@ -59,16 +59,16 @@ func (aps *Service) GetProfile(ctx context.Context, in *proto.ProfileRequest) (*
 	// thus we transform to slot data structure to make it more convenient.
 	// This could be optimized later
 	slots, ascOrderedUniqueTimestamps := aps.getSlots(results)
-	traces := aps.mapSlotsToPlotlyTraces(slots, ascOrderedUniqueTimestamps)
+	traces := aps.mapSlotsToTraces(slots, ascOrderedUniqueTimestamps)
 	//TODO find a better method to set cpu_cores
 	var cpuCores float32 = 0
 	if len(results) > 0 {
 		cpuCores = results[0].CpuCores
 	}
-	return &proto.ProfileReply{Traces: traces, CurrentCpuCores: cpuCores}, nil
+	return &proto.GetProfileResponse{Traces: traces, CurrentCpuCores: cpuCores}, nil
 }
 
-func (aps *Service) GetTopSQL(ctx context.Context, in *proto.TopSQLRequest) (*proto.TopSQLReply, error) {
+func (aps *Service) GetTopQueries(ctx context.Context, in *proto.GetTopQueriesRequest) (*proto.GetTopQueriesResponse, error) {
 	if err := shared.ValidateCommonRequestProps(shared.Validate{
 		PeriodStartFrom: in.PeriodStartFrom,
 		PeriodStartTo:   in.PeriodStartTo,
@@ -85,16 +85,16 @@ func (aps *Service) GetTopSQL(ctx context.Context, in *proto.TopSQLRequest) (*pr
 	queries, err := aps.Repo.GetQueriesByWaitEventCount(ctx, args)
 	if err != nil {
 		aps.log.Errorf("error querying clickhouse: %v", err)
-		return &proto.TopSQLReply{}, fmt.Errorf("something went wrong")
+		return &proto.GetTopQueriesResponse{}, fmt.Errorf("something went wrong")
 	}
 	queriesMetrics, _, err := aps.getMetricsForTopQueries(ctx, args, queries)
 	if err != nil {
 		return nil, err
 	}
 
-	traces := aps.mapQueriesToPlotlyTraces(queries)
+	traces := aps.mapQueriesToTraces(queries)
 
-	return &proto.TopSQLReply{
+	return &proto.GetTopQueriesResponse{
 		Traces:         traces,
 		QueriesMetrics: queriesMetrics,
 	}, nil
@@ -130,7 +130,7 @@ func (aps *Service) GetTopWaitEventsLoadByGroupName(
 		return nil, fmt.Errorf("could not GetTopWaitEventsLoadGroupByPropName: %v", err)
 	}
 
-	traces := aps.mapPropsToPlotlyTraces(waitEventsLoadGroupByPropName)
+	traces := aps.mapPropsToTraces(waitEventsLoadGroupByPropName)
 
 	return &proto.GetTopWaitEventsLoadByGroupNameResponse{Traces: traces, Groups: ""}, nil
 }
@@ -156,9 +156,9 @@ func (aps *Service) GetQueryDetails(ctx context.Context, in *proto.GetQueryDetai
 		return nil, fmt.Errorf("could not query metrics from clickhouse: %v", err)
 	}
 
-	plotlyTraces := aps.toPlotlyTrace(metricPointDBS)
+	traces := aps.toTrace(metricPointDBS)
 
-	return &proto.GetQueryDetailsResponse{Traces: plotlyTraces}, nil
+	return &proto.GetQueryDetailsResponse{Traces: traces}, nil
 }
 
 func (aps *Service) getMetricsForTopQueries(ctx context.Context, args QueryArgs, queries []QueryDB) (
@@ -192,8 +192,8 @@ func (aps *Service) getMetricsForTopQueries(ctx context.Context, args QueryArgs,
 		metricsList, err := aps.MetricsRepo.Get(ctx, core.MetricsGetArgs{
 			PeriodStartFromSec: args.PeriodStartFromSec,
 			PeriodStartToSec:   args.PeriodStartToSec,
-			Filter:             query.ID,
-			Group:              "queryid",
+			Filter:             query.Fingerprint,
+			Group:              "fingerprint",
 			Totals:             false,
 		})
 		if err != nil {
@@ -201,7 +201,7 @@ func (aps *Service) getMetricsForTopQueries(ctx context.Context, args QueryArgs,
 		}
 		if len(metricsList) > 0 {
 			metrics := shared.MakeMetrics(metricsList[0], totals, durationSec)
-			queriesMetrics[query.ID] = &proto.QueriesMetrics{Metrics: metrics}
+			queriesMetrics[query.Fingerprint] = &proto.QueriesMetrics{Metrics: metrics}
 		}
 	}
 
@@ -210,14 +210,9 @@ func (aps *Service) getMetricsForTopQueries(ctx context.Context, args QueryArgs,
 
 // the output from the db is {'query_id': 'iend09030...', 'cpu_load_wait_events': {'transactionid':0.00008680555555555556,'tuple':0.00001736111111111111, ...}, ...}
 // we want to transform into {'transactionid': {'x_values_string': [...<query>], 'y_values_float': [...]}, ...}
-func (aps *Service) mapQueriesToPlotlyTraces(queries []QueryDB) map[string]*proto.Trace {
+func (aps *Service) mapQueriesToTraces(queries []QueryDB) map[string]*proto.Trace {
 	traces := aps.prefillTraces()
 	for _, query := range queries {
-		// Discard all queries below
-		if query.CPULoadTotal < 0.001 {
-			continue
-		}
-
 		for waitEventName := range query.CPULoadWaitEvents {
 			if _, ok := traces[waitEventName]; !ok {
 				aps.log.Warningf("trace does not exist for wait event name: %v", waitEventName)
@@ -226,7 +221,7 @@ func (aps *Service) mapQueriesToPlotlyTraces(queries []QueryDB) map[string]*prot
 			trace := traces[waitEventName]
 			trace.XValuesString = append(trace.XValuesString, query.GetSQL())
 			trace.YValuesFloat = append(trace.YValuesFloat, float32(query.CPULoadWaitEvents[waitEventName]))
-			trace.XValuesMetadata[metadataQueryId].Meta = append(trace.XValuesMetadata[metadataQueryId].Meta, query.ID)
+			trace.XValuesMetadata[metadataFingerprint].Meta = append(trace.XValuesMetadata[metadataFingerprint].Meta, query.Fingerprint)
 			traces[waitEventName] = trace
 		}
 
@@ -237,14 +232,14 @@ func (aps *Service) mapQueriesToPlotlyTraces(queries []QueryDB) map[string]*prot
 			trace := traces[waitEventName]
 			trace.XValuesString = append(trace.XValuesString, query.GetSQL())
 			trace.YValuesFloat = append(trace.YValuesFloat, 0)
-			trace.XValuesMetadata[metadataQueryId].Meta = append(trace.XValuesMetadata[metadataQueryId].Meta, query.ID)
+			trace.XValuesMetadata[metadataFingerprint].Meta = append(trace.XValuesMetadata[metadataFingerprint].Meta, query.Fingerprint)
 			traces[waitEventName] = trace
 		}
 	}
 	return traces
 }
 
-func (aps *Service) mapPropsToPlotlyTraces(props []PropDB) map[string]*proto.Trace {
+func (aps *Service) mapPropsToTraces(props []PropDB) map[string]*proto.Trace {
 	traces := aps.prefillTraces()
 	for _, prop := range props {
 		for waitEventName := range prop.CPULoadWaitEvents {
@@ -299,7 +294,7 @@ func (aps *Service) getSlots(results []SlotDB) (Slots, []time.Time) {
 // https://plotly.com/javascript/reference/index/
 // it will use the previously created unique ordered timestamps to maintain the sorting.
 // If a wait event is missing in the current timestamp we will assign 0 to its value.
-func (aps *Service) mapSlotsToPlotlyTraces(slots Slots, ascOrderedTimeStamps []time.Time) map[string]*proto.Trace {
+func (aps *Service) mapSlotsToTraces(slots Slots, ascOrderedTimeStamps []time.Time) map[string]*proto.Trace {
 	traces := aps.prefillTraces()
 
 	for _, timestamp := range ascOrderedTimeStamps {
@@ -342,7 +337,7 @@ func (aps *Service) prefillTraces() map[string]*proto.Trace {
 			XValuesString:    strings,
 			YValuesFloat:     floats,
 			XValuesMetadata: map[string]*proto.Metadata{
-				metadataQueryId: {
+				metadataFingerprint: {
 					Meta: make([]string, 0),
 				},
 			},
@@ -352,7 +347,7 @@ func (aps *Service) prefillTraces() map[string]*proto.Trace {
 	return traces
 }
 
-func (aps *Service) toPlotlyTrace(metrics []core.QueryMetricPointDB) map[string]*proto.Trace {
+func (aps *Service) toTrace(metrics []core.QueryMetricPointDB) map[string]*proto.Trace {
 	const (
 		rowsSent            = "rows_sent"
 		numQueries          = "num_queries"

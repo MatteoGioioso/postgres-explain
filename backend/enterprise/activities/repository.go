@@ -23,7 +23,7 @@ GROUP BY slot, wait_event
 ORDER BY slot ASC;`
 
 const topQueriesSQLTemplate = `
-WITH final AS (WITH grouping AS (SELECT query_id,
+WITH final AS (WITH grouping AS (SELECT fingerprint,
                                         groupArray(cpu_cores)[1]  AS cc,
                                         (count() / :period_duration ) / cc AS cpu_load_by_wait_event,
                                         wait_event
@@ -31,21 +31,21 @@ WITH final AS (WITH grouping AS (SELECT query_id,
                                  WHERE period_start > :period_start_from
                                    AND period_start < :period_start_to 
                                    AND cluster_name = :cluster_name
-                                 GROUP BY wait_event, query_id)
-               SELECT query_id,
+                                 GROUP BY wait_event, fingerprint)
+               SELECT fingerprint,
                       maxMap(map(wait_event, cpu_load_by_wait_event)) AS cpu_load_wait_events,
                       sum(cpu_load_by_wait_event)                     AS cpu_load_total
                FROM grouping
-               GROUP BY query_id
+               GROUP BY fingerprint
                ORDER BY cpu_load_total DESC)
 SELECT groupArray(acs.parsed_query)[1] AS parsed_query,
        groupArray(acs.query)[1]        AS query,
        cpu_load_total,
        cpu_load_wait_events,
-       query_id
+       fingerprint
 FROM final
-         LEFT JOIN activities acs ON final.query_id = acs.query_id
-GROUP BY cpu_load_wait_events, cpu_load_total, query_id
+         LEFT JOIN activities acs ON final.fingerprint = acs.fingerprint
+GROUP BY cpu_load_wait_events, cpu_load_total, fingerprint
 ORDER BY cpu_load_total DESC
 LIMIT 25`
 
@@ -99,7 +99,7 @@ type SlotDB struct {
 }
 
 type QueryDB struct {
-	ID                string             `json:"query_id"`
+	Fingerprint       string             `json:"fingerprint"`
 	CPULoadWaitEvents map[string]float64 `json:"cpu_load_wait_events"`
 	CPULoadTotal      float32            `json:"cpu_load_total"`
 	ParsedQuery       sql.NullString     `json:"parsed_query"`

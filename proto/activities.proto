@@ -9,16 +9,16 @@ import "google/protobuf/timestamp.proto";
 import "shared.proto";
 
 service Activities {
-  rpc GetProfile(ProfileRequest) returns (ProfileReply) {
+  rpc GetProfile(GetProfileRequest) returns (GetProfileResponse) {
     option (google.api.http) = {
       post: "/v0/activities/GetProfile"
       body: "*"
     };
   }
 
-  rpc GetTopSQL(TopSQLRequest) returns (TopSQLReply) {
+  rpc GetTopQueries(GetTopQueriesRequest) returns (GetTopQueriesResponse) {
     option (google.api.http) = {
-      post: "/v0/activities/GetTopSQL"
+      post: "/v0/activities/GetTopQueries"
       body: "*"
     };
   }
@@ -38,13 +38,13 @@ service Activities {
   }
 }
 
-message ProfileRequest {
+message GetProfileRequest {
   google.protobuf.Timestamp period_start_from = 1;
   google.protobuf.Timestamp period_start_to = 2;
   string cluster_name = 3;
 }
 
-message ProfileReply {
+message GetProfileResponse {
   map<string, Trace> traces = 1;
   float current_cpu_cores = 4;
 }
@@ -66,13 +66,13 @@ message QueriesMetrics {
   map<string, MetricValues> metrics = 1;
 }
 
-message TopSQLRequest {
+message GetTopQueriesRequest {
   google.protobuf.Timestamp period_start_from = 1;
   google.protobuf.Timestamp period_start_to = 2;
   string cluster_name = 3;
 }
 
-message TopSQLReply {
+message GetTopQueriesResponse {
   map<string, Trace> traces = 1;
   map<string, QueriesMetrics> queries_metrics = 2;
 }

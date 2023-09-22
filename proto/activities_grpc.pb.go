@@ -22,8 +22,8 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ActivitiesClient interface {
-	GetProfile(ctx context.Context, in *ProfileRequest, opts ...grpc.CallOption) (*ProfileReply, error)
-	GetTopSQL(ctx context.Context, in *TopSQLRequest, opts ...grpc.CallOption) (*TopSQLReply, error)
+	GetProfile(ctx context.Context, in *GetProfileRequest, opts ...grpc.CallOption) (*GetProfileResponse, error)
+	GetTopQueries(ctx context.Context, in *GetTopQueriesRequest, opts ...grpc.CallOption) (*GetTopQueriesResponse, error)
 	GetQueryDetails(ctx context.Context, in *GetQueryDetailsRequest, opts ...grpc.CallOption) (*GetQueryDetailsResponse, error)
 	GetTopWaitEventsLoadByGroupName(ctx context.Context, in *GetTopWaitEventsLoadByGroupNameRequest, opts ...grpc.CallOption) (*GetTopWaitEventsLoadByGroupNameResponse, error)
 }
@@ -36,8 +36,8 @@ func NewActivitiesClient(cc grpc.ClientConnInterface) ActivitiesClient {
 	return &activitiesClient{cc}
 }
 
-func (c *activitiesClient) GetProfile(ctx context.Context, in *ProfileRequest, opts ...grpc.CallOption) (*ProfileReply, error) {
-	out := new(ProfileReply)
+func (c *activitiesClient) GetProfile(ctx context.Context, in *GetProfileRequest, opts ...grpc.CallOption) (*GetProfileResponse, error) {
+	out := new(GetProfileResponse)
 	err := c.cc.Invoke(ctx, "/borealis.v1beta1.Activities/GetProfile", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -45,9 +45,9 @@ func (c *activitiesClient) GetProfile(ctx context.Context, in *ProfileRequest, o
 	return out, nil
 }
 
-func (c *activitiesClient) GetTopSQL(ctx context.Context, in *TopSQLRequest, opts ...grpc.CallOption) (*TopSQLReply, error) {
-	out := new(TopSQLReply)
-	err := c.cc.Invoke(ctx, "/borealis.v1beta1.Activities/GetTopSQL", in, out, opts...)
+func (c *activitiesClient) GetTopQueries(ctx context.Context, in *GetTopQueriesRequest, opts ...grpc.CallOption) (*GetTopQueriesResponse, error) {
+	out := new(GetTopQueriesResponse)
+	err := c.cc.Invoke(ctx, "/borealis.v1beta1.Activities/GetTopQueries", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -76,8 +76,8 @@ func (c *activitiesClient) GetTopWaitEventsLoadByGroupName(ctx context.Context, 
 // All implementations must embed UnimplementedActivitiesServer
 // for forward compatibility
 type ActivitiesServer interface {
-	GetProfile(context.Context, *ProfileRequest) (*ProfileReply, error)
-	GetTopSQL(context.Context, *TopSQLRequest) (*TopSQLReply, error)
+	GetProfile(context.Context, *GetProfileRequest) (*GetProfileResponse, error)
+	GetTopQueries(context.Context, *GetTopQueriesRequest) (*GetTopQueriesResponse, error)
 	GetQueryDetails(context.Context, *GetQueryDetailsRequest) (*GetQueryDetailsResponse, error)
 	GetTopWaitEventsLoadByGroupName(context.Context, *GetTopWaitEventsLoadByGroupNameRequest) (*GetTopWaitEventsLoadByGroupNameResponse, error)
 	mustEmbedUnimplementedActivitiesServer()
@@ -87,11 +87,11 @@ type ActivitiesServer interface {
 type UnimplementedActivitiesServer struct {
 }
 
-func (UnimplementedActivitiesServer) GetProfile(context.Context, *ProfileRequest) (*ProfileReply, error) {
+func (UnimplementedActivitiesServer) GetProfile(context.Context, *GetProfileRequest) (*GetProfileResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetProfile not implemented")
 }
-func (UnimplementedActivitiesServer) GetTopSQL(context.Context, *TopSQLRequest) (*TopSQLReply, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetTopSQL not implemented")
+func (UnimplementedActivitiesServer) GetTopQueries(context.Context, *GetTopQueriesRequest) (*GetTopQueriesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetTopQueries not implemented")
 }
 func (UnimplementedActivitiesServer) GetQueryDetails(context.Context, *GetQueryDetailsRequest) (*GetQueryDetailsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetQueryDetails not implemented")
@@ -113,7 +113,7 @@ func RegisterActivitiesServer(s grpc.ServiceRegistrar, srv ActivitiesServer) {
 }
 
 func _Activities_GetProfile_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ProfileRequest)
+	in := new(GetProfileRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -125,25 +125,25 @@ func _Activities_GetProfile_Handler(srv interface{}, ctx context.Context, dec fu
 		FullMethod: "/borealis.v1beta1.Activities/GetProfile",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ActivitiesServer).GetProfile(ctx, req.(*ProfileRequest))
+		return srv.(ActivitiesServer).GetProfile(ctx, req.(*GetProfileRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Activities_GetTopSQL_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(TopSQLRequest)
+func _Activities_GetTopQueries_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetTopQueriesRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ActivitiesServer).GetTopSQL(ctx, in)
+		return srv.(ActivitiesServer).GetTopQueries(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/borealis.v1beta1.Activities/GetTopSQL",
+		FullMethod: "/borealis.v1beta1.Activities/GetTopQueries",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ActivitiesServer).GetTopSQL(ctx, req.(*TopSQLRequest))
+		return srv.(ActivitiesServer).GetTopQueries(ctx, req.(*GetTopQueriesRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -196,8 +196,8 @@ var Activities_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _Activities_GetProfile_Handler,
 		},
 		{
-			MethodName: "GetTopSQL",
-			Handler:    _Activities_GetTopSQL_Handler,
+			MethodName: "GetTopQueries",
+			Handler:    _Activities_GetTopQueries_Handler,
 		},
 		{
 			MethodName: "GetQueryDetails",

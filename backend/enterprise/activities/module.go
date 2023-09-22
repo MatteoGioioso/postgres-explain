@@ -1,6 +1,7 @@
 package activities
 
 import (
+	"fmt"
 	"github.com/borealisdb/commons/credentials"
 	"github.com/jmoiron/sqlx"
 	"github.com/sirupsen/logrus"
@@ -38,6 +39,9 @@ func (m *Module) Init(initArgs modules.InitArgs) error {
 	}
 	proto.RegisterActivityCollectorServer(initArgs.GrpcServer, activityCollectorService)
 	proto.RegisterActivitiesServer(initArgs.GrpcServer, activitiesProfilerService)
+	if err := proto.RegisterActivitiesHandlerFromEndpoint(initArgs.Ctx, initArgs.Mux, initArgs.GrpcAddress, initArgs.Opts); err != nil {
+		return fmt.Errorf("could not RegisterActivitiesHandlerFromEndpoint: %v", err)
+	}
 
 	return nil
 }

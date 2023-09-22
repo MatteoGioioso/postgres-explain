@@ -35,6 +35,57 @@ type MetricsGetArgs struct {
 	Totals                               bool
 }
 
+const queryMetricsTmpl = `
+SELECT
+
+SUM(num_queries) AS num_queries,
+SUM(num_queries_with_errors) AS num_queries_with_errors,
+SUM(num_queries_with_warnings) AS num_queries_with_warnings,
+
+SUM(m_query_time_cnt) AS m_query_time_cnt,
+SUM(m_query_time_sum) AS m_query_time_sum,
+MIN(m_query_time_min) AS m_query_time_min,
+MAX(m_query_time_max) AS m_query_time_max,
+AVG(m_query_time_p99) AS m_query_time_p99,
+
+SUM(m_rows_sent_cnt) AS m_rows_sent_cnt,
+SUM(m_rows_sent_sum) AS m_rows_sent_sum,
+MIN(m_rows_sent_min) AS m_rows_sent_min,
+MAX(m_rows_sent_max) AS m_rows_sent_max,
+AVG(m_rows_sent_p99) AS m_rows_sent_p99,
+
+SUM(m_shared_blks_hit_sum) AS m_shared_blks_hit_sum,
+SUM(m_shared_blks_read_sum) AS m_shared_blks_read_sum,
+SUM(m_shared_blks_dirtied_sum) AS m_shared_blks_dirtied_sum,
+SUM(m_shared_blks_written_sum) AS m_shared_blks_written_sum,
+
+SUM(m_local_blks_hit_sum) AS m_local_blks_hit_sum,
+SUM(m_local_blks_read_sum) AS m_local_blks_read_sum,
+SUM(m_local_blks_dirtied_sum) AS m_local_blks_dirtied_sum,
+SUM(m_local_blks_written_sum) AS m_local_blks_written_sum,
+
+SUM(m_temp_blks_read_sum) AS m_temp_blks_read_sum,
+SUM(m_temp_blks_written_sum) AS m_temp_blks_written_sum,
+SUM(m_blk_read_time_sum) AS m_blk_read_time_sum,
+SUM(m_blk_write_time_sum) AS m_blk_write_time_sum
+
+FROM metrics
+WHERE period_start >= :period_start_from AND period_start <= :period_start_to
+{{ if not .Totals }} AND {{ .Group }} = '{{ .DimensionVal }}' {{ end }}
+{{ if .Dimensions }}
+    {{range $key, $vals := .Dimensions }}
+        AND {{ $key }} IN ( '{{ StringsJoin $vals "', '" }}' )
+    {{ end }}
+{{ end }}
+{{ if .Labels }}{{$i := 0}}
+    AND ({{range $key, $vals := .Labels }}{{ $i = inc $i}}
+        {{ if gt $i 1}} OR {{ end }} has(['{{ StringsJoin $vals "', '" }}'], labels.value[indexOf(labels.key, '{{ $key }}')])
+    {{ end }})
+{{ end }}
+{{ if not .Totals }} GROUP BY {{ .Group }} {{ end }}
+	WITH TOTALS;
+`
+
 // Get select metrics for specific queryid, hostname, etc.
 // If totals = true, the function will return only totals and it will skip filters
 // to differentiate it from empty filters.
@@ -110,80 +161,6 @@ func (m *MetricsRepository) Get(ctx context.Context, gArgs MetricsGetArgs) ([]M,
 	return results, err
 }
 
-const queryMetricsTmpl = `
-SELECT
-
-SUM(num_queries) AS num_queries,
-SUM(num_queries_with_errors) AS num_queries_with_errors,
-SUM(num_queries_with_warnings) AS num_queries_with_warnings,
-
-SUM(m_query_time_cnt) AS m_query_time_cnt,
-SUM(m_query_time_sum) AS m_query_time_sum,
-MIN(m_query_time_min) AS m_query_time_min,
-MAX(m_query_time_max) AS m_query_time_max,
-AVG(m_query_time_p99) AS m_query_time_p99,
-
-SUM(m_rows_sent_cnt) AS m_rows_sent_cnt,
-SUM(m_rows_sent_sum) AS m_rows_sent_sum,
-MIN(m_rows_sent_min) AS m_rows_sent_min,
-MAX(m_rows_sent_max) AS m_rows_sent_max,
-AVG(m_rows_sent_p99) AS m_rows_sent_p99,
-
-SUM(m_shared_blks_hit_sum) AS m_shared_blks_hit_sum,
-SUM(m_shared_blks_read_sum) AS m_shared_blks_read_sum,
-SUM(m_shared_blks_dirtied_sum) AS m_shared_blks_dirtied_sum,
-SUM(m_shared_blks_written_sum) AS m_shared_blks_written_sum,
-
-SUM(m_local_blks_hit_sum) AS m_local_blks_hit_sum,
-SUM(m_local_blks_read_sum) AS m_local_blks_read_sum,
-SUM(m_local_blks_dirtied_sum) AS m_local_blks_dirtied_sum,
-SUM(m_local_blks_written_sum) AS m_local_blks_written_sum,
-
-SUM(m_temp_blks_read_sum) AS m_temp_blks_read_sum,
-SUM(m_temp_blks_written_sum) AS m_temp_blks_written_sum,
-SUM(m_blk_read_time_sum) AS m_blk_read_time_sum,
-SUM(m_blk_write_time_sum) AS m_blk_write_time_sum,
-
-SUM(m_cpu_user_time_sum) AS m_cpu_user_time_sum,
-SUM(m_cpu_sys_time_sum) AS m_cpu_sys_time_sum,
-
-SUM(m_plans_calls_sum) AS m_plans_calls_sum,
-SUM(m_plans_calls_cnt) AS m_plans_calls_cnt,
-
-SUM(m_wal_records_sum) AS m_wal_records_sum,
-SUM(m_wal_records_cnt) AS m_wal_records_cnt,
-
-SUM(m_wal_fpi_sum) AS m_wal_fpi_sum,
-SUM(m_wal_fpi_cnt) AS m_wal_fpi_cnt,
-
-SUM(m_wal_bytes_sum) as m_wal_bytes_sum,
-SUM(m_wal_bytes_cnt) as m_wal_bytes_cnt,
-
-SUM(m_plan_time_cnt) AS m_plan_time_cnt,
-SUM(m_plan_time_sum) AS m_plan_time_sum,
-MIN(m_plan_time_min) AS m_plan_time_min,
-MAX(m_plan_time_max) AS m_plan_time_max,
-
-any(top_queryid) as top_queryid,
-any(top_query) as top_query
-
-FROM metrics
-WHERE period_start >= :period_start_from AND period_start <= :period_start_to
-{{ if not .Totals }} AND {{ .Group }} = '{{ .DimensionVal }}' {{ end }}
-{{ if .Dimensions }}
-    {{range $key, $vals := .Dimensions }}
-        AND {{ $key }} IN ( '{{ StringsJoin $vals "', '" }}' )
-    {{ end }}
-{{ end }}
-{{ if .Labels }}{{$i := 0}}
-    AND ({{range $key, $vals := .Labels }}{{ $i = inc $i}}
-        {{ if gt $i 1}} OR {{ end }} has(['{{ StringsJoin $vals "', '" }}'], labels.value[indexOf(labels.key, '{{ $key }}')])
-    {{ end }})
-{{ end }}
-{{ if not .Totals }} GROUP BY {{ .Group }} {{ end }}
-	WITH TOTALS;
-`
-
 const queryMetricsTimeseries = `
 SELECT num_queries,
        (m_query_time_sum/metrics.num_queries) AS m_query_time_avg_per_call,
@@ -250,40 +227,3 @@ func (m *MetricsRepository) SelectQueryMetricsTimeseriesByQueryID(
 
 	return results, err
 }
-
-const queryTmpl = `
-SELECT
-SUM(num_queries) AS num_queries,
-SUM(m_query_time_sum) AS m_query_time_sum,
-SUM(m_rows_sent_sum) AS m_rows_sent_sum,
-SUM(m_shared_blks_hit_sum) AS m_shared_blks_hit_sum,
-SUM(m_shared_blks_read_sum) AS m_shared_blks_read_sum,
-SUM(m_shared_blks_dirtied_sum) AS m_shared_blks_dirtied_sum,
-SUM(m_shared_blks_written_sum) AS m_shared_blks_written_sum,
-SUM(m_local_blks_hit_sum) AS m_local_blks_hit_sum,
-SUM(m_local_blks_read_sum) AS m_local_blks_read_sum,
-SUM(m_local_blks_dirtied_sum) AS m_local_blks_dirtied_sum,
-SUM(m_local_blks_written_sum) AS m_local_blks_written_sum,
-SUM(m_temp_blks_read_sum) AS m_temp_blks_read_sum,
-SUM(m_temp_blks_written_sum) AS m_temp_blks_written_sum,
-SUM(m_blk_read_time_sum) AS m_blk_read_time_sum,
-SUM(m_blk_write_time_sum) AS m_blk_write_time_sum,
-any(top_queryid) as top_queryid,
-any(top_query) as top_query
-
-FROM metrics
-WHERE period_start >= :period_start_from AND period_start <= :period_start_to
-{{ if not .Totals }} AND {{ .Group }} = '{{ .DimensionVal }}' {{ end }}
-{{ if .Dimensions }}
-    {{range $key, $vals := .Dimensions }}
-        AND {{ $key }} IN ( '{{ StringsJoin $vals "', '" }}' )
-    {{ end }}
-{{ end }}
-{{ if .Labels }}{{$i := 0}}
-    AND ({{range $key, $vals := .Labels }}{{ $i = inc $i}}
-        {{ if gt $i 1}} OR {{ end }} has(['{{ StringsJoin $vals "', '" }}'], labels.value[indexOf(labels.key, '{{ $key }}')])
-    {{ end }})
-{{ end }}
-{{ if not .Totals }} GROUP BY {{ .Group }} {{ end }}
-	WITH TOTALS;
-`
