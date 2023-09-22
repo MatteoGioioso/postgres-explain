@@ -211,7 +211,9 @@ func main() {
 		log.Fatalln(err)
 	}
 	for _, module := range modulesMap {
-		module.Register(log, db, credentialsProvider, modules.Params{})
+		module.Register(log, db, credentialsProvider, modules.Params{
+			WaitEventsMapFilePath: "/",
+		})
 		if err := module.Init(modules.InitArgs{
 			Ctx:         ctx,
 			GrpcServer:  grpcServer,

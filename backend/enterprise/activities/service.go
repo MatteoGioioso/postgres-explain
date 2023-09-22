@@ -3,7 +3,6 @@ package activities
 import (
 	"context"
 	"fmt"
-	"github.com/borealisdb/commons/credentials"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -14,11 +13,10 @@ import (
 )
 
 type Service struct {
-	Repo                ActivitiesRepository
-	MetricsRepo         shared.MetricsRepository
-	WaitEventsMap       map[string]WaitEvent
-	log                 *logrus.Entry
-	credentialsProvider credentials.Credentials
+	Repo          ActivitiesRepository
+	MetricsRepo   shared.MetricsRepository
+	WaitEventsMap map[string]WaitEvent
+	log           *logrus.Entry
 
 	proto.ActivitiesServer
 }
@@ -27,15 +25,13 @@ func NewService(
 	repo ActivitiesRepository,
 	metricsRepo core.MetricsRepository,
 	waitEventsMap map[string]WaitEvent,
-	credentialsProvider credentials.Credentials,
 	log *logrus.Entry,
 ) *Service {
 	return &Service{
-		Repo:                repo,
-		WaitEventsMap:       waitEventsMap,
-		MetricsRepo:         metricsRepo,
-		log:                 log.WithField("subcomponent", "activity_profiler"),
-		credentialsProvider: credentialsProvider,
+		Repo:          repo,
+		WaitEventsMap: waitEventsMap,
+		MetricsRepo:   metricsRepo,
+		log:           log.WithField("subcomponent", "activity_profiler"),
 	}
 }
 

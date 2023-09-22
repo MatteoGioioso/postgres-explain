@@ -142,3 +142,20 @@ var FuncMap = template.FuncMap{
 	"inc":         func(i int) int { return i + 1 },
 	"StringsJoin": strings.Join,
 }
+
+// workaround to issues in closed PR https://github.com/jmoiron/sqlx/pull/579
+func EscapeColons(in string) string {
+	return strings.ReplaceAll(in, ":", "::")
+}
+
+func EscapeColonsInMap(m map[string][]string) map[string][]string {
+	escapedMap := make(map[string][]string, len(m))
+	for k, v := range m {
+		key := EscapeColons(k)
+		escapedMap[key] = make([]string, len(v))
+		for i, value := range v {
+			escapedMap[key][i] = EscapeColons(value)
+		}
+	}
+	return escapedMap
+}

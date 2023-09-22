@@ -2,8 +2,9 @@ package activities
 
 import (
 	"context"
-	"github.com/borealis/monitoring-commons/proto"
+	"fmt"
 	"github.com/sirupsen/logrus"
+	"postgres-explain/proto"
 )
 
 type ActivityCollectorService struct {
@@ -13,10 +14,10 @@ type ActivityCollectorService struct {
 }
 
 func (s ActivityCollectorService) Collect(ctx context.Context, request *proto.ActivityCollectRequest) (*proto.ActivityCollectResponse, error) {
-	s.Log.Infof("Received %+v activity samples\n", len(request.ActivitySamples))
+	s.Log.Infof("Received %+v activity samples", len(request.ActivitySamples))
 
 	if err := s.ActivitySampler.Save(request); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("could not Save: %v", err)
 	}
 
 	return &proto.ActivityCollectResponse{}, nil

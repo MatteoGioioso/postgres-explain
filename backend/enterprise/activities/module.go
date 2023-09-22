@@ -4,7 +4,7 @@ import (
 	"github.com/borealisdb/commons/credentials"
 	"github.com/jmoiron/sqlx"
 	"github.com/sirupsen/logrus"
-	"postgres-explain/backend/enterprise/core"
+	"postgres-explain/backend/enterprise/shared"
 	"postgres-explain/backend/modules"
 	"postgres-explain/proto"
 )
@@ -12,37 +12,32 @@ import (
 const ModuleName = "activities"
 
 type Module struct {
-	Log                   *logrus.Entry
-	DB                    *sqlx.DB
-	WaitEventsMapFilePath string
-	CredentialProvider    credentials.Credentials
-	MetricsRepository     core.MetricsRepository
+	Log *logrus.Entry
+	DB  *sqlx.DB
+
+	modules.Params
 }
 
 func (m *Module) Register(log *logrus.Entry, db *sqlx.DB, credentialsProvider credentials.Credentials, params modules.Params) {
 	m.Log = log.WithField("module", ModuleName)
 	m.DB = db
-	m.CredentialsProvider = credentialsProvider
 	m.Log.Infof("registered")
+	m.Params = params
 }
 
-func (m Module) Init(initArgs modules.InitArgs) error {
-	waitEventsMap := LoadWaitEventsMapFromFile(m.WaitEventsMapFilePath)
-	activitiesRepository := NewActivitiesRepository(m.DB)
-	activitySampler := NewActivitySampler(m.DB, m.Log)
+func (m *Module) Init(initArgs modules.InitArgs) error {
 	activitiesProfilerService := NewService(
-		activitiesRepository,
-		m.MetricsRepository,
-		waitEventsMap,
-		m.CredentialProvider,
+		NewActivitiesRepository(m.DB),
+		shared.NewMetricsRepository(m.DB),
+		LoadWaitEventsMapFromFile(m.WaitEventsMapFilePath),
 		m.Log,
 	)
-	activityCollectorService := ActivityCollectorService{
-		ActivitySampler: activitySampler,
-		Log:             m.Log.WithField("subcomponent", "activities-collector"),
+	activityCollectorService := &ActivityCollectorService{
+		ActivitySampler: NewActivitySampler(m.DB, m.Log),
+		Log:             m.Log,
 	}
-	proto.RegisterActivityCollectorServer(grpcServer, &activityCollectorService)
-	proto.RegisterActivitiesProfilerServer(grpcServer, activitiesProfilerService)
+	proto.RegisterActivityCollectorServer(initArgs.GrpcServer, activityCollectorService)
+	proto.RegisterActivitiesServer(initArgs.GrpcServer, activitiesProfilerService)
 
 	return nil
 }

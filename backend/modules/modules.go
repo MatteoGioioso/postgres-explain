@@ -16,6 +16,7 @@ type Module interface {
 }
 
 type Params struct {
+	WaitEventsMapFilePath string `json:"waitEventsMapFilePath"`
 }
 
 type InitArgs struct {

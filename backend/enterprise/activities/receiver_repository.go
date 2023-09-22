@@ -1,10 +1,10 @@
 package activities
 
 import (
-	"github.com/borealis/monitoring-commons/proto"
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"postgres-explain/proto"
 	"time"
 )
 
@@ -17,6 +17,7 @@ const insertActivitySQL = `
     period_start,
     period_length,
 	query_id,
+	fingerprint,
     datname,
     pid,
 	usesysid,
@@ -39,6 +40,7 @@ const insertActivitySQL = `
     :current_timestamp,
 	:period_start,
     :period_length,
+  	:fingerprint,
    	:query_id,
     :datname,
     :pid,

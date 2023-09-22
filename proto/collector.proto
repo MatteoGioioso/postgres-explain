@@ -21,12 +21,10 @@ message MetricsBucket {
   string queryid = 1;
   // digest_text - query signature. Query without values.
   string fingerprint = 2;
-  //
-  // Dimension Group.
-  //
 
-  // Service Name (can be several Services on one Node).
-  string service_name = 3;
+  string cluster_name = 3;
+  string instance_name = 253;
+
   // Several databases can't be combined in a single declarative query.
   string database = 4;
   // Several schemas can be combined in a single declarative query.
@@ -37,37 +35,8 @@ message MetricsBucket {
   string username = 6;
   // client IP or hostname.
   string client_host = 7;
-  //
-  // Unified Labels Group.
-  //
-
-  // Node identifier
-  string node_id = 224;
-  // Node name
-  string node_name = 225;
-  string instance_name = 253;
-  // Node type
-  string node_type = 226;
-  // Machine identifier
-  string machine_id = 227;
-  // Container identifier
-  string container_id = 228;
-  // Container name
-  string container_name = 165;
-  // Node model
-  string node_model = 164;
-  // Region name
-  string region = 163;
-  // Availability zone
-  string az = 162;
-  // Service identifier
-  string service_id = 229;
-  // Type of service
-  string service_type = 160;
   // Environment name
   string environment = 161;
-  // Cluster name
-  string cluster = 159;
   // Name of replication set
   string replication_set = 158;
   // Identifier of agent that collect and send metrics.
@@ -82,12 +51,8 @@ message MetricsBucket {
   uint32 period_start_unix_secs = 10;
   // Duration of bucket.
   uint32 period_length_secs = 11;
-  // One of query example from set found in bucket.
-  string example = 13;
   // Indicates if the query example is truncated.
   bool is_truncated = 15;
-  // Metrics of query example in JSON format.
-  string example_metrics = 17;
   //
   // Metrics.
   //
@@ -172,9 +137,6 @@ message MetricsBucket {
   string top_queryid = 247;
   string top_query = 250;
   string application_name = 248;
-  string planid = 249;
-  string query_plan = 251;
-  repeated string histogram_items = 252;
 }
 
 // Collector service accepts data from postgres-agent
@@ -198,6 +160,7 @@ message ActivitySample {
   uint32 pid = 2;
   string usesysid = 3;
   string usename = 4;
+  string fingerprint = 25;
   string application_name = 5;
   string backend_type = 6;
   string client_hostname = 7;

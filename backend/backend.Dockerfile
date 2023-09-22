@@ -28,6 +28,7 @@ RUN adduser \
 FROM base
 
 COPY migrations /migrations
+COPY enterprise/activities/wait_events.json /wait_events.json
 ADD bin/ /
 
 # Clean up

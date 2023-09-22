@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"io/ioutil"
 	"log"
 	"os"
 	"postgres-explain/backend/enterprise/activities"
@@ -10,7 +9,7 @@ import (
 )
 
 func LoadWaitEventsMapFromFile() map[string]activities.WaitEvent {
-	file, err := ioutil.ReadFile("wait_events.txt")
+	file, err := os.ReadFile("wait_events.txt")
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -37,7 +36,7 @@ func main() {
 		log.Fatalln(err)
 	}
 
-	if err := ioutil.WriteFile("../wait_events.json", marshal, 0700); err != nil {
+	if err := os.WriteFile("../wait_events.json", marshal, 0700); err != nil {
 		log.Fatalln(err)
 	}
 

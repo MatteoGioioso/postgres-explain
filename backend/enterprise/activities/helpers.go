@@ -2,8 +2,8 @@ package activities
 
 import (
 	"encoding/json"
-	"io/ioutil"
 	"log"
+	"os"
 	"path/filepath"
 )
 
@@ -15,7 +15,7 @@ type WaitEvent struct {
 }
 
 func LoadWaitEventsMapFromFile(dir string) map[string]WaitEvent {
-	file, err := ioutil.ReadFile(filepath.Join(dir, "wait_events.json"))
+	file, err := os.ReadFile(filepath.Join(dir, "wait_events.json"))
 	if err != nil {
 		log.Fatalln(err)
 	}
