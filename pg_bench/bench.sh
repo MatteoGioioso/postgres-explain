@@ -34,5 +34,12 @@ done
 
 sleep 5
 pgbench -i -s 10 postgres
-sleep 10
-pgbench -c 8 -T 3600 -s 5 -b tpcb-like postgres
+
+# Run forever
+while true; do
+    sleep 10
+    echo "Starting pgbench"
+    pgbench -c 8 -T 3600 -s 5 -b tpcb-like postgres
+done
+
+

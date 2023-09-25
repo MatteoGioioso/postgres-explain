@@ -8,6 +8,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"postgres-explain/backend/enterprise/shared"
 	core "postgres-explain/backend/enterprise/shared"
+	shared2 "postgres-explain/backend/shared"
 	"postgres-explain/proto"
 	"time"
 )
@@ -91,12 +92,13 @@ func (aps *Service) GetTopQueries(ctx context.Context, in *proto.GetTopQueriesRe
 	if err != nil {
 		return nil, err
 	}
-
+	metadata := aps.getQueriesMetadata(ctx, queries)
 	traces := aps.mapQueriesToTraces(queries)
 
 	return &proto.GetTopQueriesResponse{
-		Traces:         traces,
-		QueriesMetrics: queriesMetrics,
+		Traces:          traces,
+		QueriesMetrics:  queriesMetrics,
+		QueriesMetadata: metadata,
 	}, nil
 }
 
@@ -208,6 +210,19 @@ func (aps *Service) getMetricsForTopQueries(ctx context.Context, args QueryArgs,
 	return queriesMetrics, shared.MakeMetrics(totals, totals, durationSec), nil
 }
 
+func (aps *Service) getQueriesMetadata(ctx context.Context, queries []QueryDB) map[string]*proto.QueryMetadata {
+	m := make(map[string]*proto.QueryMetadata)
+	for _, query := range queries {
+		m[query.Fingerprint] = &proto.QueryMetadata{
+			Fingerprint: query.Fingerprint,
+			Parameters:  shared2.QueryParameterPlaceholder.FindAllString(query.ParsedQuery.String, -1),
+			Text:        query.ParsedQuery.String,
+		}
+	}
+
+	return m
+}
+
 // the output from the db is {'query_id': 'iend09030...', 'cpu_load_wait_events': {'transactionid':0.00008680555555555556,'tuple':0.00001736111111111111, ...}, ...}
 // we want to transform into {'transactionid': {'x_values_string': [...<query>], 'y_values_float': [...]}, ...}
 func (aps *Service) mapQueriesToTraces(queries []QueryDB) map[string]*proto.Trace {
@@ -219,9 +234,8 @@ func (aps *Service) mapQueriesToTraces(queries []QueryDB) map[string]*proto.Trac
 				continue
 			}
 			trace := traces[waitEventName]
-			trace.XValuesString = append(trace.XValuesString, query.GetSQL())
+			trace.XValuesString = append(trace.XValuesString, query.Fingerprint)
 			trace.YValuesFloat = append(trace.YValuesFloat, float32(query.CPULoadWaitEvents[waitEventName]))
-			trace.XValuesMetadata[metadataFingerprint].Meta = append(trace.XValuesMetadata[metadataFingerprint].Meta, query.Fingerprint)
 			traces[waitEventName] = trace
 		}
 
@@ -230,9 +244,8 @@ func (aps *Service) mapQueriesToTraces(queries []QueryDB) map[string]*proto.Trac
 				continue
 			}
 			trace := traces[waitEventName]
-			trace.XValuesString = append(trace.XValuesString, query.GetSQL())
+			trace.XValuesString = append(trace.XValuesString, query.Fingerprint)
 			trace.YValuesFloat = append(trace.YValuesFloat, 0)
-			trace.XValuesMetadata[metadataFingerprint].Meta = append(trace.XValuesMetadata[metadataFingerprint].Meta, query.Fingerprint)
 			traces[waitEventName] = trace
 		}
 	}
@@ -336,12 +349,7 @@ func (aps *Service) prefillTraces() map[string]*proto.Trace {
 			XValuesFloat:     floats,
 			XValuesString:    strings,
 			YValuesFloat:     floats,
-			XValuesMetadata: map[string]*proto.Metadata{
-				metadataFingerprint: {
-					Meta: make([]string, 0),
-				},
-			},
-			Color: val.Color,
+			Color:            val.Color,
 		}
 	}
 	return traces
