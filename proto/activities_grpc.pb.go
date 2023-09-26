@@ -25,7 +25,6 @@ type ActivitiesClient interface {
 	GetProfile(ctx context.Context, in *GetProfileRequest, opts ...grpc.CallOption) (*GetProfileResponse, error)
 	GetTopQueries(ctx context.Context, in *GetTopQueriesRequest, opts ...grpc.CallOption) (*GetTopQueriesResponse, error)
 	GetQueryDetails(ctx context.Context, in *GetQueryDetailsRequest, opts ...grpc.CallOption) (*GetQueryDetailsResponse, error)
-	GetTopWaitEventsLoadByGroupName(ctx context.Context, in *GetTopWaitEventsLoadByGroupNameRequest, opts ...grpc.CallOption) (*GetTopWaitEventsLoadByGroupNameResponse, error)
 }
 
 type activitiesClient struct {
@@ -63,15 +62,6 @@ func (c *activitiesClient) GetQueryDetails(ctx context.Context, in *GetQueryDeta
 	return out, nil
 }
 
-func (c *activitiesClient) GetTopWaitEventsLoadByGroupName(ctx context.Context, in *GetTopWaitEventsLoadByGroupNameRequest, opts ...grpc.CallOption) (*GetTopWaitEventsLoadByGroupNameResponse, error) {
-	out := new(GetTopWaitEventsLoadByGroupNameResponse)
-	err := c.cc.Invoke(ctx, "/borealis.v1beta1.Activities/GetTopWaitEventsLoadByGroupName", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // ActivitiesServer is the server API for Activities service.
 // All implementations must embed UnimplementedActivitiesServer
 // for forward compatibility
@@ -79,7 +69,6 @@ type ActivitiesServer interface {
 	GetProfile(context.Context, *GetProfileRequest) (*GetProfileResponse, error)
 	GetTopQueries(context.Context, *GetTopQueriesRequest) (*GetTopQueriesResponse, error)
 	GetQueryDetails(context.Context, *GetQueryDetailsRequest) (*GetQueryDetailsResponse, error)
-	GetTopWaitEventsLoadByGroupName(context.Context, *GetTopWaitEventsLoadByGroupNameRequest) (*GetTopWaitEventsLoadByGroupNameResponse, error)
 	mustEmbedUnimplementedActivitiesServer()
 }
 
@@ -95,9 +84,6 @@ func (UnimplementedActivitiesServer) GetTopQueries(context.Context, *GetTopQueri
 }
 func (UnimplementedActivitiesServer) GetQueryDetails(context.Context, *GetQueryDetailsRequest) (*GetQueryDetailsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetQueryDetails not implemented")
-}
-func (UnimplementedActivitiesServer) GetTopWaitEventsLoadByGroupName(context.Context, *GetTopWaitEventsLoadByGroupNameRequest) (*GetTopWaitEventsLoadByGroupNameResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetTopWaitEventsLoadByGroupName not implemented")
 }
 func (UnimplementedActivitiesServer) mustEmbedUnimplementedActivitiesServer() {}
 
@@ -166,24 +152,6 @@ func _Activities_GetQueryDetails_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Activities_GetTopWaitEventsLoadByGroupName_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetTopWaitEventsLoadByGroupNameRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ActivitiesServer).GetTopWaitEventsLoadByGroupName(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/borealis.v1beta1.Activities/GetTopWaitEventsLoadByGroupName",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ActivitiesServer).GetTopWaitEventsLoadByGroupName(ctx, req.(*GetTopWaitEventsLoadByGroupNameRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 // Activities_ServiceDesc is the grpc.ServiceDesc for Activities service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -202,10 +170,6 @@ var Activities_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetQueryDetails",
 			Handler:    _Activities_GetQueryDetails_Handler,
-		},
-		{
-			MethodName: "GetTopWaitEventsLoadByGroupName",
-			Handler:    _Activities_GetTopWaitEventsLoadByGroupName_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

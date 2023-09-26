@@ -3,9 +3,7 @@ package activities
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"github.com/jmoiron/sqlx"
-	"github.com/pkg/errors"
 	"postgres-explain/backend/enterprise/shared"
 	"time"
 )
@@ -106,12 +104,6 @@ type QueryDB struct {
 	Query             string             `json:"query"`
 }
 
-type PropDB struct {
-	Name              string             `json:"name"`
-	CPULoadWaitEvents map[string]float64 `json:"cpu_load_wait_events"`
-	CPULoadTotal      float32            `json:"cpu_load_total"`
-}
-
 func (q QueryDB) GetSQL() string {
 	if q.ParsedQuery.Valid && q.ParsedQuery.String != "" {
 		return q.ParsedQuery.String
@@ -120,15 +112,15 @@ func (q QueryDB) GetSQL() string {
 	return q.Query
 }
 
-type ActivitiesRepository struct {
+type Repository struct {
 	DB *sqlx.DB
 }
 
-func NewActivitiesRepository(db *sqlx.DB) ActivitiesRepository {
-	return ActivitiesRepository{DB: db}
+func NewActivitiesRepository(db *sqlx.DB) Repository {
+	return Repository{DB: db}
 }
 
-func (ar ActivitiesRepository) Select(ctx context.Context, args QueryArgs) ([]SlotDB, error) {
+func (ar Repository) Select(ctx context.Context, args QueryArgs) ([]SlotDB, error) {
 	queryArgs := map[string]interface{}{
 		"period_start_from": args.PeriodStartFromSec,
 		"period_start_to":   args.PeriodStartToSec,
@@ -158,7 +150,7 @@ func (ar ActivitiesRepository) Select(ctx context.Context, args QueryArgs) ([]Sl
 	return slots, err
 }
 
-func (ar ActivitiesRepository) GetQueriesByWaitEventCount(ctx context.Context, args QueryArgs) ([]QueryDB, error) {
+func (ar Repository) GetQueriesByWaitEventCount(ctx context.Context, args QueryArgs) ([]QueryDB, error) {
 	queryArgs := map[string]interface{}{
 		"period_start_from": args.PeriodStartFromSec,
 		"period_start_to":   args.PeriodStartToSec,
@@ -181,46 +173,4 @@ func (ar ActivitiesRepository) GetQueriesByWaitEventCount(ctx context.Context, a
 	}
 
 	return rankedQueries, nil
-}
-
-func (ar ActivitiesRepository) GetTopWaitEventsLoadGroupByPropName(ctx context.Context, args QueryArgs, propName string) ([]PropDB, error) {
-	queryArgs := map[string]interface{}{
-		"period_start_from": args.PeriodStartFromSec,
-		"period_start_to":   args.PeriodStartToSec,
-		"cluster_name":      args.ClusterName,
-	}
-
-	tmplArgs := struct {
-		Prop string
-	}{
-		Prop: propName,
-	}
-	query, vals, err := shared.ProcessQueryWithTemplate(tmplArgs, queryArgs, topPropSQLTemplate)
-	if err != nil {
-		return nil, err
-	}
-
-	var results []PropDB
-
-	query = ar.DB.Rebind(query)
-
-	queryCtx, cancel := context.WithTimeout(ctx, shared.QueryTimeout)
-	defer cancel()
-
-	rows, err := ar.DB.QueryxContext(queryCtx, query, vals...)
-	if err != nil {
-		return results, errors.Wrap(err, shared.CannotExecute)
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		result := PropDB{}
-		err = rows.StructScan(&result)
-		if err != nil {
-			return nil, fmt.Errorf("PropDB Scan error: %v", err)
-		}
-		results = append(results, result)
-	}
-
-	return results, nil
 }

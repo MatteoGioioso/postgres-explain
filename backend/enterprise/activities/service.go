@@ -14,7 +14,7 @@ import (
 )
 
 type Service struct {
-	Repo          ActivitiesRepository
+	Repo          Repository
 	MetricsRepo   shared.MetricsRepository
 	WaitEventsMap map[string]WaitEvent
 	log           *logrus.Entry
@@ -23,7 +23,7 @@ type Service struct {
 }
 
 func NewService(
-	repo ActivitiesRepository,
+	repo Repository,
 	metricsRepo core.MetricsRepository,
 	waitEventsMap map[string]WaitEvent,
 	log *logrus.Entry,
@@ -102,41 +102,6 @@ func (aps *Service) GetTopQueries(ctx context.Context, in *proto.GetTopQueriesRe
 	}, nil
 }
 
-func (aps *Service) GetTopWaitEventsLoadByGroupName(
-	ctx context.Context,
-	in *proto.GetTopWaitEventsLoadByGroupNameRequest,
-) (*proto.GetTopWaitEventsLoadByGroupNameResponse, error) {
-	if err := shared.ValidateCommonRequestProps(shared.Validate{
-		PeriodStartFrom: in.PeriodStartFrom,
-		PeriodStartTo:   in.PeriodStartTo,
-		ClusterName:     in.ClusterName,
-	}); err != nil {
-		return nil, err
-	}
-
-	_, ok := waitEventsGroupsMap[in.GroupName]
-	if !ok {
-		return nil, fmt.Errorf("prop_name %v, is not a valid group or empty", in.GroupName)
-	}
-
-	waitEventsLoadGroupByPropName, err := aps.Repo.GetTopWaitEventsLoadGroupByPropName(
-		ctx,
-		QueryArgs{
-			PeriodStartFromSec: in.PeriodStartFrom.Seconds,
-			PeriodStartToSec:   in.PeriodStartTo.Seconds,
-			ClusterName:        in.ClusterName,
-		},
-		in.GroupName,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("could not GetTopWaitEventsLoadGroupByPropName: %v", err)
-	}
-
-	traces := aps.mapPropsToTraces(waitEventsLoadGroupByPropName)
-
-	return &proto.GetTopWaitEventsLoadByGroupNameResponse{Traces: traces, Groups: ""}, nil
-}
-
 func (aps *Service) GetQueryDetails(ctx context.Context, in *proto.GetQueryDetailsRequest) (*proto.GetQueryDetailsResponse, error) {
 	if in.PeriodStartFrom == nil || in.PeriodStartTo == nil {
 		return nil, fmt.Errorf("from-date: %s or to-date: %s cannot be empty", in.PeriodStartFrom, in.PeriodStartTo)
@@ -203,6 +168,8 @@ func (aps *Service) getMetricsForTopQueries(ctx context.Context, args QueryArgs,
 		}
 		if len(metricsList) > 0 {
 			metrics := shared.MakeMetrics(metricsList[0], totals, durationSec)
+			metrics["cpu_total_load"] = &proto.MetricValues{Sum: query.CPULoadTotal}
+
 			queriesMetrics[query.Fingerprint] = &proto.QueriesMetrics{Metrics: metrics}
 		}
 	}
@@ -216,7 +183,7 @@ func (aps *Service) getQueriesMetadata(ctx context.Context, queries []QueryDB) m
 		m[query.Fingerprint] = &proto.QueryMetadata{
 			Fingerprint: query.Fingerprint,
 			Parameters:  shared2.QueryParameterPlaceholder.FindAllString(query.ParsedQuery.String, -1),
-			Text:        query.ParsedQuery.String,
+			Text:        query.GetSQL(),
 		}
 	}
 
@@ -245,33 +212,6 @@ func (aps *Service) mapQueriesToTraces(queries []QueryDB) map[string]*proto.Trac
 			}
 			trace := traces[waitEventName]
 			trace.XValuesString = append(trace.XValuesString, query.Fingerprint)
-			trace.YValuesFloat = append(trace.YValuesFloat, 0)
-			traces[waitEventName] = trace
-		}
-	}
-	return traces
-}
-
-func (aps *Service) mapPropsToTraces(props []PropDB) map[string]*proto.Trace {
-	traces := aps.prefillTraces()
-	for _, prop := range props {
-		for waitEventName := range prop.CPULoadWaitEvents {
-			if _, ok := traces[waitEventName]; !ok {
-				aps.log.Warningf("trace does not exist for wait event name: %v", waitEventName)
-				continue
-			}
-			trace := traces[waitEventName]
-			trace.XValuesString = append(trace.XValuesString, prop.Name)
-			trace.YValuesFloat = append(trace.YValuesFloat, float32(prop.CPULoadWaitEvents[waitEventName]))
-			traces[waitEventName] = trace
-		}
-
-		for waitEventName := range aps.WaitEventsMap {
-			if _, ok := prop.CPULoadWaitEvents[waitEventName]; ok {
-				continue
-			}
-			trace := traces[waitEventName]
-			trace.XValuesString = append(trace.XValuesString, prop.Name)
 			trace.YValuesFloat = append(trace.YValuesFloat, 0)
 			traces[waitEventName] = trace
 		}

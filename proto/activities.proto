@@ -29,13 +29,6 @@ service Activities {
       body: "*"
     };
   }
-
-  rpc GetTopWaitEventsLoadByGroupName(GetTopWaitEventsLoadByGroupNameRequest) returns (GetTopWaitEventsLoadByGroupNameResponse) {
-    option (google.api.http) = {
-      post: "/v0/activities/GetTopWaitEventsLoadByGroupName"
-      body: "*"
-    };
-  }
 }
 
 message GetProfileRequest {
@@ -90,17 +83,5 @@ message GetQueryDetailsRequest {
 
 message GetQueryDetailsResponse {
   map<string, Trace> traces = 1;
-}
-
-message GetTopWaitEventsLoadByGroupNameRequest {
-  google.protobuf.Timestamp period_start_from = 1;
-  google.protobuf.Timestamp period_start_to = 2;
-  string cluster_name = 3;
-  string group_name = 4;
-}
-
-message GetTopWaitEventsLoadByGroupNameResponse {
-  map<string, Trace> traces = 1;
-  string groups = 2;
 }
 

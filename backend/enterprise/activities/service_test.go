@@ -33,7 +33,6 @@ func loadFixtures(t *testing.T) []QueryDB {
 	f2 := make([]QueryDB, 0)
 	for _, q := range f {
 		f2 = append(f2, QueryDB{
-			ID:                q.ID,
 			CPULoadWaitEvents: q.CPULoadWaitEvents,
 			CPULoadTotal:      q.CPULoadTotal,
 			ParsedQuery: sql.NullString{
@@ -49,7 +48,7 @@ func loadFixtures(t *testing.T) []QueryDB {
 
 func TestService_mapQueriesToPlotlyTraces(t *testing.T) {
 	type fields struct {
-		Repo                     ActivitiesRepository
+		Repo                     Repository
 		WaitEventsMap            map[string]WaitEvent
 		log                      *logrus.Entry
 		ActivitiesProfilerServer proto.ActivitiesServer
@@ -66,7 +65,7 @@ func TestService_mapQueriesToPlotlyTraces(t *testing.T) {
 		{
 			name: "map queries to trace",
 			fields: fields{
-				Repo:                     ActivitiesRepository{},
+				Repo:                     Repository{},
 				WaitEventsMap:            LoadWaitEventsMapFromFile("./"),
 				log:                      &logrus.Entry{Logger: logrus.New()},
 				ActivitiesProfilerServer: nil,
