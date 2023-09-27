@@ -60,6 +60,7 @@ message QueryMetadata {
   string text = 3;
   repeated string examples_text = 4;
   repeated string plans_id = 5;
+  string database = 6;
 }
 
 message GetTopQueriesRequest {

@@ -26,10 +26,9 @@ message CommandResponse {
 
 message PlanRequest {
   string query = 4;
-  string query_id = 1;
   string database = 2;
   string instance_name = 5;
-  repeated string parameters = 3;
+  string cluster_name = 7;
 }
 
 message PlanResponse  {

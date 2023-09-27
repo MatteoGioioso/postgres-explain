@@ -45,6 +45,7 @@ message SaveQueryPlanRequest {
   string cluster_name = 11;
 
   string query_id = 4;
+  string query_fingerprint = 12;
   string query = 7;
   string database = 5;
   string optimization_id = 9;

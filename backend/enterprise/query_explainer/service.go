@@ -35,7 +35,7 @@ func (aps *Service) GetOptimizationsList(ctx context.Context, request *proto.Get
 	if err != nil {
 		return nil, fmt.Errorf("could not GetPlansList: %v", err)
 	}
-	
+
 	items := make([]*proto.PlanItem, 0)
 	for _, entity := range list {
 		var plan pkg.Explained
@@ -85,19 +85,44 @@ func (aps *Service) GetQueryPlansList(ctx context.Context, request *proto.GetQue
 
 func (aps *Service) SaveQueryPlan(ctx context.Context, request *proto.SaveQueryPlanRequest) (*proto.SaveQueryPlanResponse, error) {
 	planRequest := &proto.PlanRequest{
-		Query:        request.Query,
-		QueryId:      request.QueryId,
-		Database:     request.Database,
 		InstanceName: request.InstanceName,
 	}
 
-	if len(request.Parameters) > 0 {
-		var err error
-		planRequest.Parameters = request.Parameters
-		planRequest.Query, err = shared.ConvertQueryWithParams(planRequest.Query, paramsFromRequest(planRequest.Parameters))
+	if request.QueryFingerprint != "" {
+		queryMetadata, err := aps.Repo.GetQueryMetadataByFingerprint(ctx, request.QueryFingerprint)
 		if err != nil {
-			return nil, fmt.Errorf("could not ConvertQueryWithParams: %v", err)
+			return nil, fmt.Errorf("could not GetQueryMetadataByFingerprint: %v", err)
 		}
+		if queryMetadata == nil {
+			return nil, fmt.Errorf("query metadata not found for fingerprint %v", request.QueryFingerprint)
+		}
+
+		if len(request.Parameters) > 0 {
+			var err error
+			planRequest.Query, err = shared.ConvertQueryWithParams(queryMetadata.ParsedQuery, paramsFromRequest(request.Parameters))
+			if err != nil {
+				return nil, fmt.Errorf("could not ConvertQueryWithParams: %v", err)
+			}
+		} else {
+			planRequest.Query = queryMetadata.ParsedQuery
+		}
+
+		planRequest.Database = queryMetadata.Database
+	}
+
+	if request.QueryId != "" {
+		queryMetadata, err := aps.Repo.GetQueryMetadataByID(ctx, request.QueryId)
+		if err != nil {
+			return nil, fmt.Errorf("could not GetQueryMetadataByFingerprint: %v", err)
+		}
+		if queryMetadata == nil {
+			return nil, fmt.Errorf("query metadata not found for id %v", request.QueryId)
+		}
+		planRequest.Query = queryMetadata.Query
+	}
+
+	if request.Query != "" {
+		planRequest.Query = request.Query
 	}
 
 	plan, err := aps.CommandsClient.Explain(ctx, request.ClusterName, request.InstanceName, planRequest)
@@ -132,7 +157,7 @@ func (aps *Service) SaveQueryPlan(ctx context.Context, request *proto.SaveQueryP
 		Alias:            shared.ToSqlNullString(request.Alias),
 		Query:            planRequest.Query,
 		PlanID:           planId,
-		QueryID:          shared.ToSqlNullString(planRequest.QueryId),
+		QueryID:          shared.ToSqlNullString(request.QueryId),
 		QueryFingerprint: fingerprint,
 		OriginalPlan:     plan.Plan,
 		ClusterName:      request.ClusterName,
@@ -203,6 +228,14 @@ func (aps *Service) processPlan(plan string) (pkg.Explained, error) {
 		JITStats:      jitStats,
 		TriggersStats: triggersStats,
 	}, nil
+}
+
+func (aps *Service) validateSaveRequest(request *proto.SaveQueryPlanRequest) error {
+	if request.QueryFingerprint == "" && request.QueryId == "" && request.Query == "" {
+		return fmt.Errorf("at least one of the following property is required: query_fingerprint, query_id, query")
+	}
+
+	return nil
 }
 
 func paramsFromRequest(params []string) []interface{} {

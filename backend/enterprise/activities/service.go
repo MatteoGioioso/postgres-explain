@@ -55,6 +55,10 @@ func (aps *Service) GetProfile(ctx context.Context, in *proto.GetProfileRequest)
 		return &proto.GetProfileResponse{}, fmt.Errorf("something went wrong")
 	}
 
+	if len(results) == 0 {
+		return &proto.GetProfileResponse{}, nil
+	}
+
 	// TODO document this and maybe optimize
 	// Double transformation, doing in one was too complex,
 	// thus we transform to slot data structure to make it more convenient.
@@ -88,6 +92,11 @@ func (aps *Service) GetTopQueries(ctx context.Context, in *proto.GetTopQueriesRe
 		aps.log.Errorf("error querying clickhouse: %v", err)
 		return &proto.GetTopQueriesResponse{}, fmt.Errorf("something went wrong")
 	}
+
+	if len(queries) == 0 {
+		return &proto.GetTopQueriesResponse{}, nil
+	}
+
 	queriesMetrics, _, err := aps.getMetricsForTopQueries(ctx, args, queries)
 	if err != nil {
 		return nil, err
