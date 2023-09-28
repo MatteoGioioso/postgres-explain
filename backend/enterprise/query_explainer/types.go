@@ -69,14 +69,3 @@ func (r PlansSearchRequest) ToTmplArgs() interface{} {
 		OrderBy:  orderByMap[r.Order],
 	}
 }
-
-type QueryMetadataRequest struct {
-	Fingerprint string `json:"fingerprint"`
-	ID          string `json:"query_id"`
-}
-
-type QueryMetadata struct {
-	Database    string `json:"datname"`
-	Query       string `json:"query"`
-	ParsedQuery string `json:"parsed_query"`
-}

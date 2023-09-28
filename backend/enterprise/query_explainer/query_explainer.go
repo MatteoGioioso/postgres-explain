@@ -5,6 +5,7 @@ import (
 	"github.com/borealisdb/commons/credentials"
 	"github.com/jmoiron/sqlx"
 	"github.com/sirupsen/logrus"
+	"postgres-explain/backend/enterprise/activities"
 	"postgres-explain/backend/modules"
 	"postgres-explain/proto"
 )
@@ -35,6 +36,7 @@ func (m *Module) Init(initArgs modules.InitArgs) error {
 		log:            m.Log,
 		Repo:           repository,
 		CommandsClient: commandsClient,
+		ActivitiesRepo: activities.NewActivitiesRepository(m.DB),
 	}
 
 	proto.RegisterQueryExplainerServer(initArgs.GrpcServer, &service)

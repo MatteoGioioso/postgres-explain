@@ -21,6 +21,7 @@ message MetricsBucket {
   string queryid = 1;
   // digest_text - query signature. Query without values.
   string fingerprint = 2;
+  string query = 16;
 
   string cluster_name = 3;
   string instance_name = 253;
@@ -168,6 +169,7 @@ message ActivitySample {
   string wait_event = 9;
   string parsed_query = 10;
   string query = 11;
+  bool is_query_truncated = 26;
   string state = 12;
   uint32 query_start = 13;
   float duration = 14;

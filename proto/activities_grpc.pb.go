@@ -24,6 +24,7 @@ const _ = grpc.SupportPackageIsVersion7
 type ActivitiesClient interface {
 	GetProfile(ctx context.Context, in *GetProfileRequest, opts ...grpc.CallOption) (*GetProfileResponse, error)
 	GetTopQueries(ctx context.Context, in *GetTopQueriesRequest, opts ...grpc.CallOption) (*GetTopQueriesResponse, error)
+	GetTopQueriesByFingerprint(ctx context.Context, in *GetTopQueriesRequest, opts ...grpc.CallOption) (*GetTopQueriesResponse, error)
 	GetQueryDetails(ctx context.Context, in *GetQueryDetailsRequest, opts ...grpc.CallOption) (*GetQueryDetailsResponse, error)
 }
 
@@ -53,6 +54,15 @@ func (c *activitiesClient) GetTopQueries(ctx context.Context, in *GetTopQueriesR
 	return out, nil
 }
 
+func (c *activitiesClient) GetTopQueriesByFingerprint(ctx context.Context, in *GetTopQueriesRequest, opts ...grpc.CallOption) (*GetTopQueriesResponse, error) {
+	out := new(GetTopQueriesResponse)
+	err := c.cc.Invoke(ctx, "/borealis.v1beta1.Activities/GetTopQueriesByFingerprint", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *activitiesClient) GetQueryDetails(ctx context.Context, in *GetQueryDetailsRequest, opts ...grpc.CallOption) (*GetQueryDetailsResponse, error) {
 	out := new(GetQueryDetailsResponse)
 	err := c.cc.Invoke(ctx, "/borealis.v1beta1.Activities/GetQueryDetails", in, out, opts...)
@@ -68,6 +78,7 @@ func (c *activitiesClient) GetQueryDetails(ctx context.Context, in *GetQueryDeta
 type ActivitiesServer interface {
 	GetProfile(context.Context, *GetProfileRequest) (*GetProfileResponse, error)
 	GetTopQueries(context.Context, *GetTopQueriesRequest) (*GetTopQueriesResponse, error)
+	GetTopQueriesByFingerprint(context.Context, *GetTopQueriesRequest) (*GetTopQueriesResponse, error)
 	GetQueryDetails(context.Context, *GetQueryDetailsRequest) (*GetQueryDetailsResponse, error)
 	mustEmbedUnimplementedActivitiesServer()
 }
@@ -81,6 +92,9 @@ func (UnimplementedActivitiesServer) GetProfile(context.Context, *GetProfileRequ
 }
 func (UnimplementedActivitiesServer) GetTopQueries(context.Context, *GetTopQueriesRequest) (*GetTopQueriesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetTopQueries not implemented")
+}
+func (UnimplementedActivitiesServer) GetTopQueriesByFingerprint(context.Context, *GetTopQueriesRequest) (*GetTopQueriesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetTopQueriesByFingerprint not implemented")
 }
 func (UnimplementedActivitiesServer) GetQueryDetails(context.Context, *GetQueryDetailsRequest) (*GetQueryDetailsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetQueryDetails not implemented")
@@ -134,6 +148,24 @@ func _Activities_GetTopQueries_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Activities_GetTopQueriesByFingerprint_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetTopQueriesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ActivitiesServer).GetTopQueriesByFingerprint(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/borealis.v1beta1.Activities/GetTopQueriesByFingerprint",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ActivitiesServer).GetTopQueriesByFingerprint(ctx, req.(*GetTopQueriesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _Activities_GetQueryDetails_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetQueryDetailsRequest)
 	if err := dec(in); err != nil {
@@ -166,6 +198,10 @@ var Activities_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetTopQueries",
 			Handler:    _Activities_GetTopQueries_Handler,
+		},
+		{
+			MethodName: "GetTopQueriesByFingerprint",
+			Handler:    _Activities_GetTopQueriesByFingerprint_Handler,
 		},
 		{
 			MethodName: "GetQueryDetails",

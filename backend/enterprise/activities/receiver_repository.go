@@ -34,7 +34,8 @@ const insertActivitySQL = `
     duration,
 	cluster_name,
     instance_name,
-    cpu_cores
+    cpu_cores,
+	is_query_truncated
    )
   VALUES (
     :current_timestamp,
@@ -58,7 +59,8 @@ const insertActivitySQL = `
     :duration
 	:cluster_name,
     :instance_name,
-    :cpu_cores
+    :cpu_cores,
+	:is_query_truncated
   )
 `
 
@@ -66,7 +68,16 @@ type SampleDB struct {
 	PeriodStart      time.Time `json:"period_start"`
 	PeriodLength     uint32    `json:"period_length"`
 	CurrentTimestamp time.Time `json:"current_timestamp"`
+	IsQueryTruncated uint8     `json:"is_query_truncated"`
 	*proto.ActivitySample
+}
+
+func (s SampleDB) GetIsQueryTruncated(sample *proto.ActivitySample) uint8 {
+	if sample.IsQueryTruncated {
+		return 1
+	}
+
+	return 0
 }
 
 type ActivitySampler struct {
@@ -123,11 +134,17 @@ func (as *ActivitySampler) insertBatch(samples []*proto.ActivitySample) (err err
 
 	savedSamplesCounter := 0
 	for _, sample := range samples {
+		isTruncated := 0
+		if sample.IsQueryTruncated {
+			isTruncated = 1
+		}
+
 		q := SampleDB{
-			time.Unix(int64(sample.GetPeriodStartUnixSecs()), 0).UTC(),
-			sample.GetPeriodLengthSecs(),
-			time.Unix(int64(sample.GetCurrentTimestamp()), 0).UTC(),
-			sample,
+			PeriodStart:      time.Unix(int64(sample.GetPeriodStartUnixSecs()), 0).UTC(),
+			PeriodLength:     sample.GetPeriodLengthSecs(),
+			CurrentTimestamp: time.Unix(int64(sample.GetCurrentTimestamp()), 0).UTC(),
+			IsQueryTruncated: uint8(isTruncated),
+			ActivitySample:   sample,
 		}
 
 		if _, err = stmt.Exec(q); err != nil {

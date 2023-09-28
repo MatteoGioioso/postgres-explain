@@ -111,6 +111,45 @@ func (aps *Service) GetTopQueries(ctx context.Context, in *proto.GetTopQueriesRe
 	}, nil
 }
 
+func (aps *Service) GetTopQueriesByFingerprint(ctx context.Context, in *proto.GetTopQueriesRequest) (*proto.GetTopQueriesResponse, error) {
+	if err := shared.ValidateCommonRequestProps(shared.Validate{
+		PeriodStartFrom: in.PeriodStartFrom,
+		PeriodStartTo:   in.PeriodStartTo,
+		ClusterName:     in.ClusterName,
+	}); err != nil {
+		return nil, err
+	}
+
+	args := QueryArgs{
+		PeriodStartFromSec: in.PeriodStartFrom.Seconds,
+		PeriodStartToSec:   in.PeriodStartTo.Seconds,
+		ClusterName:        in.ClusterName,
+		Fingerprint:        in.Fingerprint,
+	}
+	queries, err := aps.Repo.GetTopQueriesByFingerprint(ctx, args)
+	if err != nil {
+		aps.log.Errorf("error querying clickhouse: %v", err)
+		return &proto.GetTopQueriesResponse{}, fmt.Errorf("something went wrong")
+	}
+
+	if len(queries) == 0 {
+		return &proto.GetTopQueriesResponse{}, nil
+	}
+
+	queriesMetrics, _, err := aps.getMetricsForTopQueries(ctx, args, queries)
+	if err != nil {
+		return nil, err
+	}
+	metadata := aps.getQueriesMetadata(ctx, queries)
+	traces := aps.mapQueriesToTraces(queries)
+
+	return &proto.GetTopQueriesResponse{
+		Traces:          traces,
+		QueriesMetrics:  queriesMetrics,
+		QueriesMetadata: metadata,
+	}, nil
+}
+
 func (aps *Service) GetQueryDetails(ctx context.Context, in *proto.GetQueryDetailsRequest) (*proto.GetQueryDetailsResponse, error) {
 	if in.PeriodStartFrom == nil || in.PeriodStartTo == nil {
 		return nil, fmt.Errorf("from-date: %s or to-date: %s cannot be empty", in.PeriodStartFrom, in.PeriodStartTo)
@@ -146,8 +185,8 @@ func (aps *Service) getMetricsForTopQueries(ctx context.Context, args QueryArgs,
 		ctx,
 		core.MetricsGetArgs{
 			PeriodStartFromSec: args.PeriodStartFromSec,
-			PeriodStartToSec:   args.PeriodStartToSec, // empty filter by (queryid, or other)
-			Totals:             true,                  // get Totals
+			PeriodStartToSec:   args.PeriodStartToSec,
+			Totals:             true, // get Totals
 		},
 	)
 	if err != nil {
@@ -190,9 +229,10 @@ func (aps *Service) getQueriesMetadata(ctx context.Context, queries []QueryDB) m
 	m := make(map[string]*proto.QueryMetadata)
 	for _, query := range queries {
 		m[query.Fingerprint] = &proto.QueryMetadata{
-			Fingerprint: query.Fingerprint,
-			Parameters:  shared2.QueryParameterPlaceholder.FindAllString(query.ParsedQuery.String, -1),
-			Text:        query.GetSQL(),
+			Fingerprint:      query.Fingerprint,
+			Parameters:       shared2.QueryParameterPlaceholder.FindAllString(query.ParsedQuery.String, -1),
+			Text:             query.GetSQL(),
+			IsQueryTruncated: query.IsQueryTruncated == 1,
 		}
 	}
 

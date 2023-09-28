@@ -23,6 +23,13 @@ service Activities {
     };
   }
 
+  rpc GetTopQueriesByFingerprint(GetTopQueriesRequest) returns (GetTopQueriesResponse) {
+    option (google.api.http) = {
+      post: "/v0/activities/GetTopQueriesByFingerprint"
+      body: "*"
+    };
+  }
+
   rpc GetQueryDetails(GetQueryDetailsRequest) returns (GetQueryDetailsResponse) {
     option (google.api.http) = {
       post: "/v0/activities/GetQueryDetails"
@@ -61,12 +68,14 @@ message QueryMetadata {
   repeated string examples_text = 4;
   repeated string plans_id = 5;
   string database = 6;
+  bool is_query_truncated = 7;
 }
 
 message GetTopQueriesRequest {
   google.protobuf.Timestamp period_start_from = 1;
   google.protobuf.Timestamp period_start_to = 2;
   string cluster_name = 3;
+  string fingerprint = 4;
 }
 
 message GetTopQueriesResponse {

@@ -12,6 +12,7 @@ CREATE TABLE activities (
                             `wait_event` String,
                             `parsed_query` String,
                             `query` String,
+                            `is_query_truncated` UInt8 COMMENT 'Indicates if query is too long and was truncated from postgres',
                             `state` String,
                             `query_start` UInt32,
                             `duration` Float32,

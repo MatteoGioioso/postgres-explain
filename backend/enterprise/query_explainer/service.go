@@ -8,6 +8,7 @@ import (
 	pg_query "github.com/pganalyze/pg_query_go/v4"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/protobuf/types/known/timestamppb"
+	"postgres-explain/backend/enterprise/activities"
 	"postgres-explain/backend/shared"
 	"postgres-explain/core/pkg"
 	"postgres-explain/proto"
@@ -17,6 +18,7 @@ import (
 type Service struct {
 	log            *logrus.Entry
 	Repo           Repository
+	ActivitiesRepo activities.Repository
 	CommandsClient CommandsClient
 
 	proto.QueryExplainerServer
@@ -89,12 +91,15 @@ func (aps *Service) SaveQueryPlan(ctx context.Context, request *proto.SaveQueryP
 	}
 
 	if request.QueryFingerprint != "" {
-		queryMetadata, err := aps.Repo.GetQueryMetadataByFingerprint(ctx, request.QueryFingerprint)
+		queryMetadata, err := aps.ActivitiesRepo.GetQueryMetadataByFingerprint(ctx, request.QueryFingerprint)
 		if err != nil {
 			return nil, fmt.Errorf("could not GetQueryMetadataByFingerprint: %v", err)
 		}
 		if queryMetadata == nil {
 			return nil, fmt.Errorf("query metadata not found for fingerprint %v", request.QueryFingerprint)
+		}
+		if queryMetadata.IsQueryTruncated == 1 && request.Query == "" {
+			return nil, fmt.Errorf("query is truncated, cannot run an incomplete query")
 		}
 
 		if len(request.Parameters) > 0 {
@@ -108,17 +113,6 @@ func (aps *Service) SaveQueryPlan(ctx context.Context, request *proto.SaveQueryP
 		}
 
 		planRequest.Database = queryMetadata.Database
-	}
-
-	if request.QueryId != "" {
-		queryMetadata, err := aps.Repo.GetQueryMetadataByID(ctx, request.QueryId)
-		if err != nil {
-			return nil, fmt.Errorf("could not GetQueryMetadataByFingerprint: %v", err)
-		}
-		if queryMetadata == nil {
-			return nil, fmt.Errorf("query metadata not found for id %v", request.QueryId)
-		}
-		planRequest.Query = queryMetadata.Query
 	}
 
 	if request.Query != "" {
