@@ -65,3 +65,6 @@ reload.enterprise: build.backend.enterprise
 
 reload.collector: build.collector
 	docker-compose up --build --remove-orphans collector -d
+
+down:
+	docker-compose down --remove-orphans

@@ -18,7 +18,7 @@ const (
 )
 
 const insertSQL = `
-  INSERT INTO metrics
+  INSERT INTO analytics
   (
     queryid,
     cluster_name,

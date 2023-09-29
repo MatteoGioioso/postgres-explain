@@ -78,7 +78,8 @@ SELECT groupArray(acs.parsed_query)[1] AS parsed_query,
        cpu_load_total,
        cpu_load_wait_events,
        fingerprint,
-       groupArray(acs.is_query_truncated)[1] AS is_query_truncated
+       groupArray(acs.is_query_truncated)[1] AS is_query_truncated,
+       groupArray(acs.is_not_explainable)[1] AS is_query_explainable
 FROM final
          LEFT JOIN activities acs ON final.fingerprint = acs.fingerprint
 GROUP BY cpu_load_wait_events, cpu_load_total, fingerprint
@@ -95,23 +96,32 @@ func (ar Repository) GetQueriesByWaitEventCount(ctx context.Context, args QueryA
 	return ar.getTopQueries(ctx, queryArgs, topQueriesSQLTemplate)
 }
 
-const getTopQueriesByFingerprintTmpl = `WITH grouping AS (SELECT query,
-                         groupArray(cpu_cores)[1] AS cc,
-                         (count() / :period_duration) / cc    AS cpu_load_by_wait_event,
-                         wait_event
-                  FROM activities
-                  WHERE period_start > :period_start_from
-                    AND period_start < :period_start_to
-                    AND cluster_name = :cluster_name
-                    AND fingerprint = :fingerprint
-                  GROUP BY wait_event, query)
-SELECT query,
-       maxMap(map(wait_event, cpu_load_by_wait_event)) AS cpu_load_wait_events,
-       sum(cpu_load_by_wait_event)                     AS cpu_load_total
-FROM grouping
-GROUP BY query
+const getTopQueriesByFingerprintTmpl = `WITH final AS (WITH grouping AS (SELECT query,
+                                        groupArray(cpu_cores)[1] AS cc,
+                                        (count() / :period_duration) / cc    AS cpu_load_by_wait_event,
+                                        wait_event
+                                 FROM activities
+                                 WHERE period_start > :period_start_from
+                                   AND period_start < :period_start_to
+                                   AND cluster_name = :cluster_name
+                                   AND fingerprint = :fingerprint
+                                 GROUP BY wait_event, query)
+               SELECT query,
+                      maxMap(map(wait_event, cpu_load_by_wait_event)) AS cpu_load_wait_events,
+                      sum(cpu_load_by_wait_event)                     AS cpu_load_total
+               FROM grouping
+               GROUP BY query
+               ORDER BY cpu_load_total DESC)
+SELECT acs.query                             AS query,
+       cpu_load_total,
+       cpu_load_wait_events,
+       groupArray(acs.is_query_truncated)[1] AS is_query_truncated,
+       acs.query_sha                         AS query_sha
+FROM final
+         LEFT JOIN activities acs ON final.query = acs.query
+GROUP BY cpu_load_wait_events, cpu_load_total, fingerprint, acs.query_sha, acs.query
 ORDER BY cpu_load_total DESC
-LIMIT 10`
+LIMIT 25`
 
 func (ar Repository) GetTopQueriesByFingerprint(ctx context.Context, args QueryArgs) ([]QueryDB, error) {
 	queryArgs := map[string]interface{}{
@@ -145,6 +155,7 @@ func (ar Repository) getTopQueries(ctx context.Context, args map[string]interfac
 }
 
 const getQueryMetadataByFingerprintTmpl = `SELECT datname, parsed_query, is_query_truncated FROM activities WHERE fingerprint = :fingerprint LIMIT 1`
+const getQueryMetadataByShaTmpl = `SELECT datname, query, is_query_truncated FROM activities WHERE query_sha = :query_sha LIMIT 1`
 
 func (ar Repository) GetQueryMetadataByFingerprint(ctx context.Context, fingerprint string) (*QueryMetadata, error) {
 	metadata, err := ar.getQueryMetadata(ctx, getQueryMetadataByFingerprintTmpl, struct {

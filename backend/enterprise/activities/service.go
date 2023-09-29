@@ -102,7 +102,10 @@ func (aps *Service) GetTopQueries(ctx context.Context, in *proto.GetTopQueriesRe
 		return nil, err
 	}
 	metadata := aps.getQueriesMetadata(ctx, queries)
-	traces := aps.mapQueriesToTraces(queries)
+	xValueGetter := func(db QueryDB) string {
+		return db.Fingerprint
+	}
+	traces := aps.mapQueriesToTraces(queries, xValueGetter)
 
 	return &proto.GetTopQueriesResponse{
 		Traces:          traces,
@@ -136,16 +139,14 @@ func (aps *Service) GetTopQueriesByFingerprint(ctx context.Context, in *proto.Ge
 		return &proto.GetTopQueriesResponse{}, nil
 	}
 
-	queriesMetrics, _, err := aps.getMetricsForTopQueries(ctx, args, queries)
-	if err != nil {
-		return nil, err
-	}
 	metadata := aps.getQueriesMetadata(ctx, queries)
-	traces := aps.mapQueriesToTraces(queries)
+	xValueGetter := func(db QueryDB) string {
+		return db.QuerySha
+	}
+	traces := aps.mapQueriesToTraces(queries, xValueGetter)
 
 	return &proto.GetTopQueriesResponse{
 		Traces:          traces,
-		QueriesMetrics:  queriesMetrics,
 		QueriesMetadata: metadata,
 	}, nil
 }
@@ -161,17 +162,17 @@ func (aps *Service) GetQueryDetails(ctx context.Context, in *proto.GetQueryDetai
 		return nil, fmt.Errorf("from-date %s cannot be bigger then to-date %s", in.PeriodStartFrom, in.PeriodStartTo)
 	}
 
-	metricPointDBS, err := aps.MetricsRepo.SelectQueryMetricsTimeseriesByQueryID(
+	queryMetricsByFingerprint, err := aps.MetricsRepo.SelectQueryMetricsByFingerprint(
 		ctx,
 		core.MetricsGetArgs{PeriodStartFromSec: periodStartFromSec, PeriodStartToSec: periodStartToSec},
-		in.QueryId,
+		in.QueryFingerprint,
 		in.ClusterName,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("could not query metrics from clickhouse: %v", err)
 	}
 
-	traces := aps.toTrace(metricPointDBS)
+	traces := aps.toTrace(queryMetricsByFingerprint)
 
 	return &proto.GetQueryDetailsResponse{Traces: traces}, nil
 }
@@ -229,10 +230,12 @@ func (aps *Service) getQueriesMetadata(ctx context.Context, queries []QueryDB) m
 	m := make(map[string]*proto.QueryMetadata)
 	for _, query := range queries {
 		m[query.Fingerprint] = &proto.QueryMetadata{
-			Fingerprint:      query.Fingerprint,
-			Parameters:       shared2.QueryParameterPlaceholder.FindAllString(query.ParsedQuery.String, -1),
-			Text:             query.GetSQL(),
-			IsQueryTruncated: query.IsQueryTruncated == 1,
+			Fingerprint:        query.Fingerprint,
+			Parameters:         shared2.QueryParameterPlaceholder.FindAllString(query.ParsedQuery.String, -1),
+			Text:               query.GetSQL(),
+			IsQueryTruncated:   query.IsQueryTruncated == 1,
+			QuerySha:           query.QuerySha,
+			IsQueryExplainable: query.IsQueryExplainable,
 		}
 	}
 
@@ -241,7 +244,7 @@ func (aps *Service) getQueriesMetadata(ctx context.Context, queries []QueryDB) m
 
 // the output from the db is {'query_id': 'iend09030...', 'cpu_load_wait_events': {'transactionid':0.00008680555555555556,'tuple':0.00001736111111111111, ...}, ...}
 // we want to transform into {'transactionid': {'x_values_string': [...<query>], 'y_values_float': [...]}, ...}
-func (aps *Service) mapQueriesToTraces(queries []QueryDB) map[string]*proto.Trace {
+func (aps *Service) mapQueriesToTraces(queries []QueryDB, xValueGetter func(db QueryDB) string) map[string]*proto.Trace {
 	traces := aps.prefillTraces()
 	for _, query := range queries {
 		for waitEventName := range query.CPULoadWaitEvents {
@@ -250,7 +253,7 @@ func (aps *Service) mapQueriesToTraces(queries []QueryDB) map[string]*proto.Trac
 				continue
 			}
 			trace := traces[waitEventName]
-			trace.XValuesString = append(trace.XValuesString, query.Fingerprint)
+			trace.XValuesString = append(trace.XValuesString, xValueGetter(query))
 			trace.YValuesFloat = append(trace.YValuesFloat, float32(query.CPULoadWaitEvents[waitEventName]))
 			traces[waitEventName] = trace
 		}
@@ -260,7 +263,7 @@ func (aps *Service) mapQueriesToTraces(queries []QueryDB) map[string]*proto.Trac
 				continue
 			}
 			trace := traces[waitEventName]
-			trace.XValuesString = append(trace.XValuesString, query.Fingerprint)
+			trace.XValuesString = append(trace.XValuesString, xValueGetter(query))
 			trace.YValuesFloat = append(trace.YValuesFloat, 0)
 			traces[waitEventName] = trace
 		}
@@ -344,7 +347,7 @@ func (aps *Service) prefillTraces() map[string]*proto.Trace {
 	return traces
 }
 
-func (aps *Service) toTrace(metrics []core.QueryMetricPointDB) map[string]*proto.Trace {
+func (aps *Service) toTrace(metrics []core.QueryMetricDB) map[string]*proto.Trace {
 	const (
 		rowsSent            = "rows_sent"
 		numQueries          = "num_queries"

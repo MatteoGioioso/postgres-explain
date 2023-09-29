@@ -69,7 +69,7 @@ SUM(m_temp_blks_written_sum) AS m_temp_blks_written_sum,
 SUM(m_blk_read_time_sum) AS m_blk_read_time_sum,
 SUM(m_blk_write_time_sum) AS m_blk_write_time_sum
 
-FROM metrics
+FROM analytics
 WHERE period_start >= :period_start_from AND period_start <= :period_start_to
 {{ if not .Totals }} AND {{ .Group }} = '{{ .DimensionVal }}' {{ end }}
 {{ if .Dimensions }}
@@ -163,44 +163,34 @@ func (m *MetricsRepository) Get(ctx context.Context, gArgs MetricsGetArgs) ([]M,
 
 const queryMetricsTimeseries = `
 SELECT num_queries,
-       (m_query_time_sum/metrics.num_queries) AS m_query_time_avg_per_call,
+       (m_query_time_sum/analytics.num_queries) AS m_query_time_avg_per_call,
        m_rows_sent_sum,
        m_shared_blks_read_sum,
        m_shared_blks_written_sum,
        m_shared_blks_hit_sum,
        period_start
-FROM metrics
-WHERE period_start >= :period_start_from AND period_start <= :period_start_to AND queryid = :queryid AND cluster = :cluster_name
+FROM analytics
+WHERE period_start >= :period_start_from AND period_start <= :period_start_to AND fingerprint = :fingerprint AND cluster_name = :cluster_name
 ORDER BY period_start;
 `
 
-type QueryMetricPointDB struct {
-	Timestamp           time.Time `json:"period_start"`
-	QueryTimeAvgPerCall float64   `json:"m_query_time_avg_per_call"`
-	NumQueries          int       `json:"num_queries"`
-	RowSent             int       `json:"m_rows_sent_sum"`
-	SharedBlocksRead    int       `json:"m_shared_blks_read_sum"`
-	SharedBlocksWritten int       `json:"m_shared_blks_written_sum"`
-	SharedBlocksHit     int       `json:"m_shared_blks_hit_sum"`
-}
-
-func (m *MetricsRepository) SelectQueryMetricsTimeseriesByQueryID(
+func (m *MetricsRepository) SelectQueryMetricsByFingerprint(
 	ctx context.Context,
 	in MetricsGetArgs,
-	queryID string,
+	queryFingerPrint string,
 	clusterName string,
-) ([]QueryMetricPointDB, error) {
+) ([]QueryMetricDB, error) {
 	arg := map[string]interface{}{
 		"period_start_from": in.PeriodStartFromSec,
 		"period_start_to":   in.PeriodStartToSec,
-		"queryid":           queryID,
+		"fingerprint":       queryFingerPrint,
 		"cluster_name":      clusterName,
 	}
 
 	var queryBuffer bytes.Buffer
 	queryBuffer.WriteString(queryMetricsTimeseries)
 
-	var results []QueryMetricPointDB
+	var results []QueryMetricDB
 	query, args, err := processQuery(queryBuffer, arg)
 	if err != nil {
 		return nil, fmt.Errorf("could not process query: %v", err)
@@ -217,7 +207,7 @@ func (m *MetricsRepository) SelectQueryMetricsTimeseriesByQueryID(
 	defer rows.Close() //nolint:errcheck
 
 	for rows.Next() {
-		result := QueryMetricPointDB{}
+		result := QueryMetricDB{}
 		err = rows.StructScan(&result)
 		if err != nil {
 			logrus.Errorf("DimensionMetrics Scan error: %v", err)
@@ -226,4 +216,14 @@ func (m *MetricsRepository) SelectQueryMetricsTimeseriesByQueryID(
 	}
 
 	return results, err
+}
+
+type QueryMetricDB struct {
+	Timestamp           time.Time `json:"period_start"`
+	QueryTimeAvgPerCall float64   `json:"m_query_time_avg_per_call"`
+	NumQueries          int       `json:"num_queries"`
+	RowSent             int       `json:"m_rows_sent_sum"`
+	SharedBlocksRead    int       `json:"m_shared_blks_read_sum"`
+	SharedBlocksWritten int       `json:"m_shared_blks_written_sum"`
+	SharedBlocksHit     int       `json:"m_shared_blks_hit_sum"`
 }

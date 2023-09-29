@@ -82,7 +82,7 @@ func TestService_mapQueriesToPlotlyTraces(t *testing.T) {
 				log:              tt.fields.log,
 				ActivitiesServer: tt.fields.ActivitiesProfilerServer,
 			}
-			if got := aps.mapQueriesToTraces(tt.args.queries); !reflect.DeepEqual(got, tt.want) {
+			if got := aps.mapQueriesToTraces(tt.args.queries, nil); !reflect.DeepEqual(got, tt.want) {
 				for _, q := range got["AddinShmemInit"].XValuesString {
 					t.Log(q)
 				}

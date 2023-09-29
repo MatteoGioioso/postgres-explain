@@ -1,0 +1,77 @@
+CREATE TABLE analytics
+(
+    -- Main dimensions
+    `queryid` LowCardinality(String) COMMENT 'hash of query fingerprint',
+    `cluster_name` LowCardinality(String) COMMENT 'Name of the cluster in which the instance belong',
+    `instance_name` LowCardinality(String) COMMENT 'Name of the cluster instance',
+    `database` LowCardinality(String) COMMENT 'PostgreSQL: database',
+    `schema` LowCardinality(String) COMMENT 'PostgreSQL: schema',
+    `username` LowCardinality(String) COMMENT 'client user name',
+    `client_host` LowCardinality(String) COMMENT 'client IP or hostname',
+    --  Standard labels
+    `replication_set` LowCardinality(String) COMMENT 'Name of replication set',
+    `environment` LowCardinality(String) COMMENT 'Environment name',
+    `tables`                    Array(String),
+    -- Custom labels
+    `labels.key`                Array(LowCardinality(String)) COMMENT 'Custom labels names',
+    `labels.value`              Array(LowCardinality(String)) COMMENT 'Custom labels values',
+    `agent_id` LowCardinality(String) COMMENT 'Identifier of agent that collect and send metrics',
+    `period_start`              DateTime COMMENT 'Time when collection of bucket started',
+    `period_length`             UInt32 COMMENT 'Duration of collection bucket',
+    `fingerprint` LowCardinality(String) COMMENT 'query without data',
+    `is_truncated`              UInt8 COMMENT 'Indicates if query examples is too long and was truncated',
+
+    `num_queries_with_warnings` Float32 COMMENT 'How many queries was with warnings in bucket',
+    `warnings.code`             Array(UInt32) COMMENT 'List of warnings',
+    `warnings.count`            Array(Float32) COMMENT 'Count of each warnings in bucket',
+    `num_queries_with_errors`   Float32 COMMENT 'How many queries was with error in bucket',
+    `errors.code`               Array(UInt64) COMMENT 'List of Last_errno',
+    `errors.count`              Array(UInt64) COMMENT 'Count of each Last_errno in bucket',
+    `num_queries`               Float32 COMMENT 'Amount queries in this bucket',
+    -- Metrics
+    `m_query_time_cnt`          Float32 COMMENT 'The statement execution time in seconds was met.',
+    `m_query_time_sum`          Float32 COMMENT 'The statement execution time in seconds.',
+    `m_query_time_min`          Float32 COMMENT 'Smallest value of query_time in bucket',
+    `m_query_time_max`          Float32 COMMENT 'Biggest value of query_time in bucket',
+    `m_query_time_p99`          Float32 COMMENT '99 percentile of value of query_time in bucket',
+    `m_rows_sent_cnt`           Float32,
+    `m_rows_sent_sum`           Float32 COMMENT 'The number of rows sent to the client.',
+    `m_rows_sent_min`           Float32,
+    `m_rows_sent_max`           Float32,
+    `m_rows_sent_p99`           Float32,
+
+    `m_shared_blks_hit_cnt`     Float32,
+    `m_shared_blks_hit_sum`     Float32 COMMENT 'Total number of shared blocks cache hits by the statement',
+    `m_shared_blks_read_cnt`    Float32,
+    `m_shared_blks_read_sum`    Float32 COMMENT 'Total number of shared blocks read by the statement.',
+    `m_shared_blks_dirtied_cnt` Float32,
+    `m_shared_blks_dirtied_sum` Float32 COMMENT 'Total number of shared blocks dirtied by the statement.',
+    `m_shared_blks_written_cnt` Float32,
+    `m_shared_blks_written_sum` Float32 COMMENT 'Total number of shared blocks written by the statement.',
+    `m_local_blks_hit_cnt`      Float32,
+    `m_local_blks_hit_sum`      Float32 COMMENT 'Total number of local block cache hits by the statement',
+    `m_local_blks_read_cnt`     Float32,
+    `m_local_blks_read_sum`     Float32 COMMENT 'Total number of local blocks read by the statement.',
+    `m_local_blks_dirtied_cnt`  Float32,
+    `m_local_blks_dirtied_sum`  Float32 COMMENT 'Total number of local blocks dirtied by the statement.',
+    `m_local_blks_written_cnt`  Float32,
+    `m_local_blks_written_sum`  Float32 COMMENT 'Total number of local blocks written by the statement.',
+    `m_temp_blks_read_cnt`      Float32,
+    `m_temp_blks_read_sum`      Float32 COMMENT 'Total number of temp blocks read by the statement.',
+    `m_temp_blks_written_cnt`   Float32,
+    `m_temp_blks_written_sum`   Float32 COMMENT 'Total number of temp blocks written by the statement.',
+    `m_blk_read_time_cnt`       Float32,
+    `m_blk_read_time_sum`       Float32 COMMENT 'Total time the statement spent reading blocks, in milliseconds (if track_io_timing is enabled, otherwise zero).',
+    `m_blk_write_time_cnt`      Float32,
+    `m_blk_write_time_sum`      Float32 COMMENT 'Total time the statement spent writing blocks, in milliseconds (if track_io_timing is enabled, otherwise zero).'
+) ENGINE = MergeTree PARTITION BY toYYYYMMDD(period_start)
+      ORDER BY
+          (
+           queryid,
+           cluster_name,
+           database,
+           schema,
+           username,
+           client_host,
+           period_start
+              ) SETTINGS index_granularity = 8192;

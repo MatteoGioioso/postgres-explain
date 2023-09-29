@@ -159,7 +159,7 @@ func main() {
 	go func() {
 		defer wg.Done()
 		for {
-			// Drop old partitions once in 24h.
+			// Drop old partitions every 24h.
 			DropOldPartition(db, "plans", *dataRetentionDays, log)
 			select {
 			case <-ctx.Done():
@@ -230,6 +230,7 @@ func main() {
 
 	wg.Add(1)
 	go func() {
+		defer wg.Done()
 		go func() {
 			if err := grpcServer.Serve(listen); err != nil {
 				log.Fatalln(err)

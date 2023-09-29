@@ -2,6 +2,7 @@ package activities
 
 import (
 	"database/sql"
+	"postgres-explain/proto"
 	"time"
 )
 
@@ -66,12 +67,14 @@ type SlotDB struct {
 }
 
 type QueryDB struct {
-	Fingerprint       string             `json:"fingerprint"`
-	CPULoadWaitEvents map[string]float64 `json:"cpu_load_wait_events"`
-	CPULoadTotal      float32            `json:"cpu_load_total"`
-	ParsedQuery       sql.NullString     `json:"parsed_query"`
-	Query             string             `json:"query"`
-	IsQueryTruncated  uint8              `json:"is_query_truncated"`
+	Fingerprint        string             `json:"fingerprint"`
+	CPULoadWaitEvents  map[string]float64 `json:"cpu_load_wait_events"`
+	CPULoadTotal       float32            `json:"cpu_load_total"`
+	ParsedQuery        sql.NullString     `json:"parsed_query"`
+	Query              string             `json:"query"`
+	QuerySha           string             `json:"query_sha"`
+	IsQueryTruncated   uint8              `json:"is_query_truncated"`
+	IsQueryExplainable bool               `json:"is_query_explainable"`
 }
 
 func (q QueryDB) GetSQL() string {
@@ -86,4 +89,25 @@ type QueryByFingerprintDB struct {
 	CPULoadWaitEvents map[string]float64 `json:"cpu_load_wait_events"`
 	CPULoadTotal      float32            `json:"cpu_load_total"`
 	Query             string             `json:"query"`
+}
+
+type ActivitySampleDB struct {
+	PeriodStart      time.Time `json:"period_start"`
+	PeriodLength     uint32    `json:"period_length"`
+	CurrentTimestamp time.Time `json:"current_timestamp"`
+	IsQueryTruncated uint8     `json:"is_query_truncated"`
+	*proto.ActivitySample
+}
+
+func (s *ActivitySampleDB) FromActivitySample(sample *proto.ActivitySample) {
+	isTruncated := 0
+	if sample.IsQueryTruncated {
+		isTruncated = 1
+	}
+
+	s.PeriodStart = time.Unix(int64(sample.GetPeriodStartUnixSecs()), 0).UTC()
+	s.PeriodLength = sample.GetPeriodLengthSecs()
+	s.CurrentTimestamp = time.Unix(int64(sample.GetCurrentTimestamp()), 0).UTC()
+	s.IsQueryTruncated = uint8(isTruncated)
+	s.ActivitySample = sample
 }

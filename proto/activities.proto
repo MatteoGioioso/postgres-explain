@@ -69,6 +69,8 @@ message QueryMetadata {
   repeated string plans_id = 5;
   string database = 6;
   bool is_query_truncated = 7;
+  string query_sha = 8;
+  bool is_query_explainable = 9;
 }
 
 message GetTopQueriesRequest {
@@ -88,7 +90,7 @@ message GetQueryDetailsRequest {
   google.protobuf.Timestamp period_start_from = 1;
   google.protobuf.Timestamp period_start_to = 2;
   string cluster_name = 3;
-  string query_id = 4;
+  string query_fingerprint = 4;
 }
 
 message GetQueryDetailsResponse {
