@@ -79,7 +79,7 @@ SELECT groupArray(acs.parsed_query)[1] AS parsed_query,
        cpu_load_wait_events,
        fingerprint,
        groupArray(acs.is_query_truncated)[1] AS is_query_truncated,
-       groupArray(acs.is_not_explainable)[1] AS is_query_explainable
+       groupArray(acs.is_not_explainable)[1] AS is_query_not_explainable
 FROM final
          LEFT JOIN activities acs ON final.fingerprint = acs.fingerprint
 GROUP BY cpu_load_wait_events, cpu_load_total, fingerprint
@@ -116,7 +116,9 @@ SELECT acs.query                             AS query,
        cpu_load_total,
        cpu_load_wait_events,
        groupArray(acs.is_query_truncated)[1] AS is_query_truncated,
-       acs.query_sha                         AS query_sha
+       acs.query_sha                         AS query_sha,
+       groupArray(acs.is_not_explainable)[1] AS is_query_not_explainable,
+       fingerprint
 FROM final
          LEFT JOIN activities acs ON final.query = acs.query
 GROUP BY cpu_load_wait_events, cpu_load_total, fingerprint, acs.query_sha, acs.query

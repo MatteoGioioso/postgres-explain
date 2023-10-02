@@ -4,23 +4,22 @@ import (
 	"database/sql"
 	"encoding/json"
 	"github.com/sirupsen/logrus"
-	"io/ioutil"
+	"github.com/stretchr/testify/assert"
+	"os"
 	"postgres-explain/proto"
-	"reflect"
 	"testing"
 )
 
 // We replicate this type because we cannot unmarshal sql.NullString
 type QueryDBTest struct {
-	ID                string             `json:"query_id"`
-	CPULoadWaitEvents map[string]float64 `json:"cpu_load_wait_events"`
-	CPULoadTotal      float32            `json:"cpu_load_total"`
-	ParsedQuery       string             `json:"parsed_query"`
-	Query             string             `json:"query"`
+	QueryDB
+	ParsedQuery        string `json:"parsed_query"`
+	IsQueryTruncated   string `json:"is_query_truncated"`
+	IsQueryExplainable string `json:"is_query_explainable"`
 }
 
 func loadFixtures(t *testing.T) []QueryDB {
-	file, err := ioutil.ReadFile("../../../testdata/fixtures/queries.json")
+	file, err := os.ReadFile("../../fixtures/queries_001.json")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -31,15 +30,17 @@ func loadFixtures(t *testing.T) []QueryDB {
 	}
 
 	f2 := make([]QueryDB, 0)
-	for _, q := range f {
+	for _, fx := range f {
 		f2 = append(f2, QueryDB{
-			CPULoadWaitEvents: q.CPULoadWaitEvents,
-			CPULoadTotal:      q.CPULoadTotal,
+			Fingerprint:       fx.Fingerprint,
+			CPULoadWaitEvents: fx.CPULoadWaitEvents,
+			CPULoadTotal:      fx.CPULoadTotal,
 			ParsedQuery: sql.NullString{
-				String: q.ParsedQuery,
+				String: fx.ParsedQuery,
 				Valid:  true,
 			},
-			Query: q.Query,
+			Query:    fx.Query,
+			QuerySha: fx.QuerySha,
 		})
 	}
 
@@ -82,14 +83,11 @@ func TestService_mapQueriesToPlotlyTraces(t *testing.T) {
 				log:              tt.fields.log,
 				ActivitiesServer: tt.fields.ActivitiesProfilerServer,
 			}
-			if got := aps.mapQueriesToTraces(tt.args.queries, nil); !reflect.DeepEqual(got, tt.want) {
-				for _, q := range got["AddinShmemInit"].XValuesString {
-					t.Log(q)
-				}
-				t.Log(len(got["AddinShmemInit"].XValuesString))
+			res := aps.mapQueriesToTraces(tt.args.queries, func(db QueryDB) string {
+				return db.Fingerprint
+			})
 
-				//t.Errorf("mapQueriesToTraces() = %v, want %v", got, tt.want)
-			}
+			assert.Equal(t, len(res), 13)
 		})
 	}
 }

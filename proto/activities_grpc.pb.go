@@ -24,7 +24,7 @@ const _ = grpc.SupportPackageIsVersion7
 type ActivitiesClient interface {
 	GetProfile(ctx context.Context, in *GetProfileRequest, opts ...grpc.CallOption) (*GetProfileResponse, error)
 	GetTopQueries(ctx context.Context, in *GetTopQueriesRequest, opts ...grpc.CallOption) (*GetTopQueriesResponse, error)
-	GetTopQueriesByFingerprint(ctx context.Context, in *GetTopQueriesRequest, opts ...grpc.CallOption) (*GetTopQueriesResponse, error)
+	GetTopQueriesByFingerprint(ctx context.Context, in *GetTopQueriesRequest, opts ...grpc.CallOption) (*GetTopQueriesByFingerprintResponse, error)
 	GetQueryDetails(ctx context.Context, in *GetQueryDetailsRequest, opts ...grpc.CallOption) (*GetQueryDetailsResponse, error)
 }
 
@@ -54,8 +54,8 @@ func (c *activitiesClient) GetTopQueries(ctx context.Context, in *GetTopQueriesR
 	return out, nil
 }
 
-func (c *activitiesClient) GetTopQueriesByFingerprint(ctx context.Context, in *GetTopQueriesRequest, opts ...grpc.CallOption) (*GetTopQueriesResponse, error) {
-	out := new(GetTopQueriesResponse)
+func (c *activitiesClient) GetTopQueriesByFingerprint(ctx context.Context, in *GetTopQueriesRequest, opts ...grpc.CallOption) (*GetTopQueriesByFingerprintResponse, error) {
+	out := new(GetTopQueriesByFingerprintResponse)
 	err := c.cc.Invoke(ctx, "/borealis.v1beta1.Activities/GetTopQueriesByFingerprint", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -78,7 +78,7 @@ func (c *activitiesClient) GetQueryDetails(ctx context.Context, in *GetQueryDeta
 type ActivitiesServer interface {
 	GetProfile(context.Context, *GetProfileRequest) (*GetProfileResponse, error)
 	GetTopQueries(context.Context, *GetTopQueriesRequest) (*GetTopQueriesResponse, error)
-	GetTopQueriesByFingerprint(context.Context, *GetTopQueriesRequest) (*GetTopQueriesResponse, error)
+	GetTopQueriesByFingerprint(context.Context, *GetTopQueriesRequest) (*GetTopQueriesByFingerprintResponse, error)
 	GetQueryDetails(context.Context, *GetQueryDetailsRequest) (*GetQueryDetailsResponse, error)
 	mustEmbedUnimplementedActivitiesServer()
 }
@@ -93,7 +93,7 @@ func (UnimplementedActivitiesServer) GetProfile(context.Context, *GetProfileRequ
 func (UnimplementedActivitiesServer) GetTopQueries(context.Context, *GetTopQueriesRequest) (*GetTopQueriesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetTopQueries not implemented")
 }
-func (UnimplementedActivitiesServer) GetTopQueriesByFingerprint(context.Context, *GetTopQueriesRequest) (*GetTopQueriesResponse, error) {
+func (UnimplementedActivitiesServer) GetTopQueriesByFingerprint(context.Context, *GetTopQueriesRequest) (*GetTopQueriesByFingerprintResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetTopQueriesByFingerprint not implemented")
 }
 func (UnimplementedActivitiesServer) GetQueryDetails(context.Context, *GetQueryDetailsRequest) (*GetQueryDetailsResponse, error) {

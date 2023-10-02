@@ -1,0 +1,157 @@
+[
+  {
+    "parsed_query": "END;",
+    "query": "END;",
+    "cpu_load_total": 0.07701388888888887,
+    "cpu_load_wait_events": {
+      "CPU": 0.002361111111111111,
+      "ClientRead": 0.0003125,
+      "WALInitSync": 0.00006944444444444444,
+      "WALSync": 0.01953125,
+      "WALWrite": 0.05472222222222222,
+      "transactionid": 0.00001736111111111111
+    },
+    "fingerprint": "END;",
+    "is_query_truncated": "0",
+    "is_query_explainable": "1"
+  },
+  {
+    "parsed_query": "UPDATE pgbench_branches SET bbalance = bbalance + $1 WHERE bid = $2;",
+    "query": "UPDATE pgbench_branches SET bbalance = bbalance + -3682 WHERE bid = 4;",
+    "cpu_load_total": 0.03982638888888889,
+    "cpu_load_wait_events": {
+      "BufferContent": 0.00005208333333333334,
+      "CPU": 0.005347222222222222,
+      "ClientRead": 0.0004166666666666667,
+      "transactionid": 0.029357638888888888,
+      "tuple": 0.004652777777777777
+    },
+    "fingerprint": "a74faacd91ac7cd8",
+    "is_query_truncated": "0",
+    "is_query_explainable": "0"
+  },
+  {
+    "parsed_query": "UPDATE pgbench_tellers SET tbalance = tbalance + $1 WHERE tid = $2;",
+    "query": "UPDATE pgbench_tellers SET tbalance = tbalance + 1108 WHERE tid = 65;",
+    "cpu_load_total": 0.009027777777777779,
+    "cpu_load_wait_events": {
+      "CPU": 0.0039409722222222224,
+      "ClientRead": 0.00043402777777777775,
+      "LockManager": 0.00001736111111111111,
+      "transactionid": 0.004600694444444445,
+      "tuple": 0.00003472222222222222
+    },
+    "fingerprint": "3af462a553c75b51",
+    "is_query_truncated": "0",
+    "is_query_explainable": "0"
+  },
+  {
+    "parsed_query": "UPDATE pgbench_accounts SET abalance = abalance + $1 WHERE aid = $2;",
+    "query": "UPDATE pgbench_accounts SET abalance = abalance + 2040 WHERE aid = 862655;",
+    "cpu_load_total": 0.005503472222222222,
+    "cpu_load_wait_events": {
+      "CPU": 0.0048090277777777775,
+      "ClientRead": 0.0006076388888888889,
+      "DataFileRead": 0.00008680555555555556
+    },
+    "fingerprint": "3315bfa60c2c07a3",
+    "is_query_truncated": "0",
+    "is_query_explainable": "0"
+  },
+  {
+    "parsed_query": "INSERT INTO pgbench_history (tid, bid, aid, delta, mtime) VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP);",
+    "query": "INSERT INTO pgbench_history (tid, bid, aid, delta, mtime) VALUES (88, 9, 860586, 4363, CURRENT_TIMESTAMP);",
+    "cpu_load_total": 0.003263888888888889,
+    "cpu_load_wait_events": {
+      "CPU": 0.00265625,
+      "ClientRead": 0.0005902777777777778,
+      "DataFileExtend": 0.00001736111111111111
+    },
+    "fingerprint": "7ff3bc0e2a3ff59f",
+    "is_query_truncated": "0",
+    "is_query_explainable": "0"
+  },
+  {
+    "parsed_query": "SELECT abalance FROM pgbench_accounts WHERE aid = $1;",
+    "query": "SELECT abalance FROM pgbench_accounts WHERE aid = 899303;",
+    "cpu_load_total": 0.003107638888888889,
+    "cpu_load_wait_events": {
+      "CPU": 0.0025520833333333333,
+      "ClientRead": 0.0005555555555555556
+    },
+    "fingerprint": "348bee4e67e86ca6",
+    "is_query_truncated": "0",
+    "is_query_explainable": "0"
+  },
+  {
+    "parsed_query": "BEGIN;",
+    "query": "BEGIN;",
+    "cpu_load_total": 0.0005381944444444444,
+    "cpu_load_wait_events": {
+      "CPU": 0.00017361111111111112,
+      "ClientRead": 0.00036458333333333335
+    },
+    "fingerprint": "BEGIN;",
+    "is_query_truncated": "0",
+    "is_query_explainable": "1"
+  },
+  {
+    "parsed_query": "autovacuum: VACUUM ANALYZE public.pgbench_tellers",
+    "query": "autovacuum: VACUUM ANALYZE public.pgbench_tellers",
+    "cpu_load_total": 0.00034722222222222224,
+    "cpu_load_wait_events": {
+      "VacuumTruncate": 0.00034722222222222224
+    },
+    "fingerprint": "autovacuum: VACUUM ANALYZE public.pgbench_tellers",
+    "is_query_truncated": "0",
+    "is_query_explainable": "1"
+  },
+  {
+    "parsed_query": "autovacuum: ANALYZE public.pgbench_accounts",
+    "query": "autovacuum: ANALYZE public.pgbench_accounts",
+    "cpu_load_total": 0.00020833333333333335,
+    "cpu_load_wait_events": {
+      "CPU": 0.00003472222222222222,
+      "VacuumDelay": 0.00017361111111111112
+    },
+    "fingerprint": "autovacuum: ANALYZE public.pgbench_accounts",
+    "is_query_truncated": "0",
+    "is_query_explainable": "1"
+  },
+  {
+    "parsed_query": "autovacuum: VACUUM ANALYZE public.pgbench_history",
+    "query": "autovacuum: VACUUM ANALYZE public.pgbench_history",
+    "cpu_load_total": 0.00008680555555555556,
+    "cpu_load_wait_events": {
+      "CPU": 0.00003472222222222222,
+      "DataFileRead": 0.00001736111111111111,
+      "DataFileWrite": 0.00001736111111111111,
+      "VacuumDelay": 0.00001736111111111111
+    },
+    "fingerprint": "autovacuum: VACUUM ANALYZE public.pgbench_history",
+    "is_query_truncated": "0",
+    "is_query_explainable": "1"
+  },
+  {
+    "parsed_query": "vacuum analyze pgbench_accounts",
+    "query": "vacuum analyze pgbench_accounts",
+    "cpu_load_total": 0.00001736111111111111,
+    "cpu_load_wait_events": {
+      "CPU": 0.00001736111111111111
+    },
+    "fingerprint": "vacuum analyze pgbench_accounts",
+    "is_query_truncated": "0",
+    "is_query_explainable": "1"
+  },
+  {
+    "parsed_query": "copy pgbench_accounts from stdin",
+    "query": "copy pgbench_accounts from stdin",
+    "cpu_load_total": 0.00001736111111111111,
+    "cpu_load_wait_events": {
+      "DataFileWrite": 0.00001736111111111111
+    },
+    "fingerprint": "copy pgbench_accounts from stdin",
+    "is_query_truncated": "0",
+    "is_query_explainable": "1"
+  }
+]

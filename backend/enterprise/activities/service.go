@@ -7,8 +7,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"postgres-explain/backend/enterprise/shared"
-	core "postgres-explain/backend/enterprise/shared"
-	shared2 "postgres-explain/backend/shared"
+	sharedBackend "postgres-explain/backend/shared"
 	"postgres-explain/proto"
 	"time"
 )
@@ -24,7 +23,7 @@ type Service struct {
 
 func NewService(
 	repo Repository,
-	metricsRepo core.MetricsRepository,
+	metricsRepo shared.MetricsRepository,
 	waitEventsMap map[string]WaitEvent,
 	log *logrus.Entry,
 ) *Service {
@@ -101,10 +100,11 @@ func (aps *Service) GetTopQueries(ctx context.Context, in *proto.GetTopQueriesRe
 	if err != nil {
 		return nil, err
 	}
-	metadata := aps.getQueriesMetadata(ctx, queries)
-	xValueGetter := func(db QueryDB) string {
-		return db.Fingerprint
+
+	xValueGetter := func(query QueryDB) string {
+		return query.Fingerprint
 	}
+	metadata := aps.getQueriesMetadata(ctx, queries, xValueGetter)
 	traces := aps.mapQueriesToTraces(queries, xValueGetter)
 
 	return &proto.GetTopQueriesResponse{
@@ -114,7 +114,7 @@ func (aps *Service) GetTopQueries(ctx context.Context, in *proto.GetTopQueriesRe
 	}, nil
 }
 
-func (aps *Service) GetTopQueriesByFingerprint(ctx context.Context, in *proto.GetTopQueriesRequest) (*proto.GetTopQueriesResponse, error) {
+func (aps *Service) GetTopQueriesByFingerprint(ctx context.Context, in *proto.GetTopQueriesRequest) (*proto.GetTopQueriesByFingerprintResponse, error) {
 	if err := shared.ValidateCommonRequestProps(shared.Validate{
 		PeriodStartFrom: in.PeriodStartFrom,
 		PeriodStartTo:   in.PeriodStartTo,
@@ -131,23 +131,28 @@ func (aps *Service) GetTopQueriesByFingerprint(ctx context.Context, in *proto.Ge
 	}
 	queries, err := aps.Repo.GetTopQueriesByFingerprint(ctx, args)
 	if err != nil {
-		aps.log.Errorf("error querying clickhouse: %v", err)
-		return &proto.GetTopQueriesResponse{}, fmt.Errorf("something went wrong")
+		return &proto.GetTopQueriesByFingerprintResponse{}, fmt.Errorf("could not GetTopQueriesByFingerprint: %v", err)
 	}
 
 	if len(queries) == 0 {
-		return &proto.GetTopQueriesResponse{}, nil
+		return &proto.GetTopQueriesByFingerprintResponse{}, nil
 	}
 
-	metadata := aps.getQueriesMetadata(ctx, queries)
-	xValueGetter := func(db QueryDB) string {
-		return db.QuerySha
+	queriesMetrics, _, err := aps.getMetricsForTopQueries(ctx, args, queries)
+	if err != nil {
+		return nil, fmt.Errorf("could not getMetricsForTopQueries: %v", err)
 	}
+
+	xValueGetter := func(query QueryDB) string {
+		return query.QuerySha
+	}
+	metadata := aps.getQueriesMetadata(ctx, queries, xValueGetter)
 	traces := aps.mapQueriesToTraces(queries, xValueGetter)
 
-	return &proto.GetTopQueriesResponse{
+	return &proto.GetTopQueriesByFingerprintResponse{
 		Traces:          traces,
 		QueriesMetadata: metadata,
+		QueryMetrics:    queriesMetrics[queries[0].Fingerprint],
 	}, nil
 }
 
@@ -164,7 +169,7 @@ func (aps *Service) GetQueryDetails(ctx context.Context, in *proto.GetQueryDetai
 
 	queryMetricsByFingerprint, err := aps.MetricsRepo.SelectQueryMetricsByFingerprint(
 		ctx,
-		core.MetricsGetArgs{PeriodStartFromSec: periodStartFromSec, PeriodStartToSec: periodStartToSec},
+		shared.MetricsGetArgs{PeriodStartFromSec: periodStartFromSec, PeriodStartToSec: periodStartToSec},
 		in.QueryFingerprint,
 		in.ClusterName,
 	)
@@ -184,7 +189,7 @@ func (aps *Service) getMetricsForTopQueries(ctx context.Context, args QueryArgs,
 ) {
 	totalsList, err := aps.MetricsRepo.Get(
 		ctx,
-		core.MetricsGetArgs{
+		shared.MetricsGetArgs{
 			PeriodStartFromSec: args.PeriodStartFromSec,
 			PeriodStartToSec:   args.PeriodStartToSec,
 			Totals:             true, // get Totals
@@ -205,7 +210,7 @@ func (aps *Service) getMetricsForTopQueries(ctx context.Context, args QueryArgs,
 
 	queriesMetrics := make(map[string]*proto.QueriesMetrics)
 	for _, query := range queries {
-		metricsList, err := aps.MetricsRepo.Get(ctx, core.MetricsGetArgs{
+		metricsList, err := aps.MetricsRepo.Get(ctx, shared.MetricsGetArgs{
 			PeriodStartFromSec: args.PeriodStartFromSec,
 			PeriodStartToSec:   args.PeriodStartToSec,
 			Filter:             query.Fingerprint,
@@ -226,35 +231,43 @@ func (aps *Service) getMetricsForTopQueries(ctx context.Context, args QueryArgs,
 	return queriesMetrics, shared.MakeMetrics(totals, totals, durationSec), nil
 }
 
-func (aps *Service) getQueriesMetadata(ctx context.Context, queries []QueryDB) map[string]*proto.QueryMetadata {
+func (aps *Service) getQueriesMetadata(ctx context.Context, queries []QueryDB, keyGetter func(db QueryDB) string) map[string]*proto.QueryMetadata {
 	m := make(map[string]*proto.QueryMetadata)
 	for _, query := range queries {
-		m[query.Fingerprint] = &proto.QueryMetadata{
-			Fingerprint:        query.Fingerprint,
-			Parameters:         shared2.QueryParameterPlaceholder.FindAllString(query.ParsedQuery.String, -1),
-			Text:               query.GetSQL(),
-			IsQueryTruncated:   query.IsQueryTruncated == 1,
-			QuerySha:           query.QuerySha,
-			IsQueryExplainable: query.IsQueryExplainable,
+		m[keyGetter(query)] = &proto.QueryMetadata{
+			Fingerprint:           query.Fingerprint,
+			Parameters:            sharedBackend.QueryParameterPlaceholder.FindAllString(query.ParsedQuery.String, -1),
+			Text:                  query.GetSQL(),
+			IsQueryTruncated:      query.IsQueryTruncated == 1,
+			QuerySha:              query.QuerySha,
+			IsQueryNotExplainable: query.IsQueryNotExplainable,
 		}
 	}
 
 	return m
 }
 
-// the output from the db is {'query_id': 'iend09030...', 'cpu_load_wait_events': {'transactionid':0.00008680555555555556,'tuple':0.00001736111111111111, ...}, ...}
+// the output from the db is {'fingerprint': 'iend09030...', 'cpu_load_wait_events': {'transactionid':0.00008680555555555556,'tuple':0.00001736111111111111, ...}, ...}
 // we want to transform into {'transactionid': {'x_values_string': [...<query>], 'y_values_float': [...]}, ...}
+// output map[<wait_event_name>]{ x_value_string: ['SELECT * FROM table...', 'SELECT id FROM customers...'], y_values_float: [0.1, 0.0023, ...]}
 func (aps *Service) mapQueriesToTraces(queries []QueryDB, xValueGetter func(db QueryDB) string) map[string]*proto.Trace {
 	traces := aps.prefillTraces()
+	// This is done to remove all wait events that contains only zero values
+	hasWaitEventNonZeroValues := make(map[string]bool)
+
 	for _, query := range queries {
 		for waitEventName := range query.CPULoadWaitEvents {
 			if _, ok := traces[waitEventName]; !ok {
 				aps.log.Warningf("trace does not exist for wait event name: %v", waitEventName)
 				continue
 			}
+
+			hasWaitEventNonZeroValues[waitEventName] = true
 			trace := traces[waitEventName]
+			traceYValue := float32(query.CPULoadWaitEvents[waitEventName])
 			trace.XValuesString = append(trace.XValuesString, xValueGetter(query))
-			trace.YValuesFloat = append(trace.YValuesFloat, float32(query.CPULoadWaitEvents[waitEventName]))
+			trace.YValuesFloat = append(trace.YValuesFloat, traceYValue)
+
 			traces[waitEventName] = trace
 		}
 
@@ -262,12 +275,22 @@ func (aps *Service) mapQueriesToTraces(queries []QueryDB, xValueGetter func(db Q
 			if _, ok := query.CPULoadWaitEvents[waitEventName]; ok {
 				continue
 			}
+
 			trace := traces[waitEventName]
 			trace.XValuesString = append(trace.XValuesString, xValueGetter(query))
 			trace.YValuesFloat = append(trace.YValuesFloat, 0)
+
 			traces[waitEventName] = trace
 		}
 	}
+
+	for waitEventName, _ := range traces {
+		if !hasWaitEventNonZeroValues[waitEventName] {
+			delete(traces, waitEventName)
+			continue
+		}
+	}
+
 	return traces
 }
 
@@ -301,6 +324,7 @@ func (aps *Service) getSlots(results []SlotDB) (Slots, []time.Time) {
 // If a wait event is missing in the current timestamp we will assign 0 to its value.
 func (aps *Service) mapSlotsToTraces(slots Slots, ascOrderedTimeStamps []time.Time) map[string]*proto.Trace {
 	traces := aps.prefillTraces()
+	hasWaitEventNonZeroValues := make(map[string]bool)
 
 	for _, timestamp := range ascOrderedTimeStamps {
 		slot := slots[timestamp]
@@ -309,6 +333,9 @@ func (aps *Service) mapSlotsToTraces(slots Slots, ascOrderedTimeStamps []time.Ti
 				aps.log.Println("trace does not exist for wait event name:", waitEventName)
 				continue
 			}
+
+			hasWaitEventNonZeroValues[waitEventName] = true
+
 			trace := traces[waitEventName]
 			trace.XValuesTimestamp = append(trace.XValuesTimestamp, timestamppb.New(timestamp))
 			trace.YValuesFloat = append(trace.YValuesFloat, slot.GetWaitEventFraction(waitEventName))
@@ -319,10 +346,18 @@ func (aps *Service) mapSlotsToTraces(slots Slots, ascOrderedTimeStamps []time.Ti
 			if _, ok := slot[waitEventName]; ok {
 				continue
 			}
+
 			trace := traces[waitEventName]
 			trace.XValuesTimestamp = append(trace.XValuesTimestamp, timestamppb.New(timestamp))
 			trace.YValuesFloat = append(trace.YValuesFloat, 0)
 			traces[waitEventName] = trace
+		}
+	}
+
+	for waitEventName, _ := range traces {
+		if !hasWaitEventNonZeroValues[waitEventName] {
+			delete(traces, waitEventName)
+			continue
 		}
 	}
 
@@ -347,23 +382,23 @@ func (aps *Service) prefillTraces() map[string]*proto.Trace {
 	return traces
 }
 
-func (aps *Service) toTrace(metrics []core.QueryMetricDB) map[string]*proto.Trace {
+func (aps *Service) toTrace(metrics []shared.QueryMetricDB) map[string]*proto.Trace {
 	const (
-		rowsSent            = "rows_sent"
-		numQueries          = "num_queries"
-		queryTimePerCall    = "query_time_per_call"
-		sharedBlocksRead    = "shared_blks_read"
-		sharedBlocksWritten = "shared_blks_written"
-		sharedBlocksHit     = "shared_blks_hit"
+		rowsSent           = "rows_sent"
+		numQueries         = "num_queries"
+		queryTimePerCall   = "query_time_per_call"
+		totalBlocksRead    = "total_blks_read"
+		totalBlocksWritten = "total_blks_written"
+		totalBlocksHit     = "total_blks_hit"
 	)
 
 	var allowedMetrics = []string{
 		rowsSent,
 		numQueries,
 		queryTimePerCall,
-		sharedBlocksRead,
-		sharedBlocksWritten,
-		sharedBlocksHit,
+		totalBlocksRead,
+		totalBlocksWritten,
+		totalBlocksHit,
 	}
 
 	var metricsMap = make(map[string]*proto.Trace)
@@ -378,9 +413,9 @@ func (aps *Service) toTrace(metrics []core.QueryMetricDB) map[string]*proto.Trac
 		metricsMap[numQueries].YValuesFloat = append(metricsMap[numQueries].YValuesFloat, float32(m.NumQueries))
 		metricsMap[rowsSent].YValuesFloat = append(metricsMap[rowsSent].YValuesFloat, float32(m.RowSent))
 		metricsMap[queryTimePerCall].YValuesFloat = append(metricsMap[queryTimePerCall].YValuesFloat, float32(m.QueryTimeAvgPerCall))
-		metricsMap[sharedBlocksRead].YValuesFloat = append(metricsMap[sharedBlocksRead].YValuesFloat, float32(m.SharedBlocksRead))
-		metricsMap[sharedBlocksWritten].YValuesFloat = append(metricsMap[sharedBlocksWritten].YValuesFloat, float32(m.SharedBlocksWritten))
-		metricsMap[sharedBlocksHit].YValuesFloat = append(metricsMap[sharedBlocksHit].YValuesFloat, float32(m.SharedBlocksHit))
+		metricsMap[totalBlocksRead].YValuesFloat = append(metricsMap[totalBlocksRead].YValuesFloat, float32(m.TotalBlocksRead))
+		metricsMap[totalBlocksWritten].YValuesFloat = append(metricsMap[totalBlocksWritten].YValuesFloat, float32(m.TotalBlocksWritten))
+		metricsMap[totalBlocksHit].YValuesFloat = append(metricsMap[totalBlocksHit].YValuesFloat, float32(m.TotalBlocksHit))
 	}
 
 	for _, metricName := range allowedMetrics {

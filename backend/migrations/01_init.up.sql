@@ -10,7 +10,7 @@ CREATE TABLE plans
     `database` LowCardinality(String) COMMENT 'PostgreSQL: database',
     `schema` LowCardinality(String) COMMENT 'PostgreSQL: schema',
     `username` LowCardinality(String) COMMENT 'client user name',
-    `cluster` LowCardinality(String) COMMENT 'Cluster name',
+    `cluster` LowCardinality(String) COMMENT 'Activities name',
     `period_start`    DateTime COMMENT 'Time when collection of bucket started',
     `period_length`   UInt32 COMMENT 'Duration of collection bucket',
     `optimization_id` String COMMENT 'for tracking optimizations'

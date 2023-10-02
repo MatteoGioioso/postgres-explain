@@ -13,11 +13,6 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-const (
-	OptimalAmountOfPoint = 120
-	MinFullTimeFrame     = 2 * time.Hour
-)
-
 // MetricsRepository represents methods to work with metrics.
 type MetricsRepository struct {
 	db *sqlx.DB
@@ -163,11 +158,11 @@ func (m *MetricsRepository) Get(ctx context.Context, gArgs MetricsGetArgs) ([]M,
 
 const queryMetricsTimeseries = `
 SELECT num_queries,
-       (m_query_time_sum/analytics.num_queries) AS m_query_time_avg_per_call,
+       (m_query_time_sum / num_queries) AS m_query_time_avg_per_call,
        m_rows_sent_sum,
-       m_shared_blks_read_sum,
-       m_shared_blks_written_sum,
-       m_shared_blks_hit_sum,
+       m_shared_blks_read_sum + m_local_blks_read_sum + m_temp_blks_read_sum AS m_total_blks_read_sum,
+       m_shared_blks_written_sum + m_local_blks_written_sum + m_temp_blks_written_sum AS m_total_blks_written_sum,
+       m_shared_blks_hit_sum + m_local_blks_hit_sum AS m_total_blks_hit_sum,
        period_start
 FROM analytics
 WHERE period_start >= :period_start_from AND period_start <= :period_start_to AND fingerprint = :fingerprint AND cluster_name = :cluster_name
@@ -177,13 +172,13 @@ ORDER BY period_start;
 func (m *MetricsRepository) SelectQueryMetricsByFingerprint(
 	ctx context.Context,
 	in MetricsGetArgs,
-	queryFingerPrint string,
+	queryFingerprint string,
 	clusterName string,
 ) ([]QueryMetricDB, error) {
 	arg := map[string]interface{}{
 		"period_start_from": in.PeriodStartFromSec,
 		"period_start_to":   in.PeriodStartToSec,
-		"fingerprint":       queryFingerPrint,
+		"fingerprint":       queryFingerprint,
 		"cluster_name":      clusterName,
 	}
 
@@ -223,7 +218,7 @@ type QueryMetricDB struct {
 	QueryTimeAvgPerCall float64   `json:"m_query_time_avg_per_call"`
 	NumQueries          int       `json:"num_queries"`
 	RowSent             int       `json:"m_rows_sent_sum"`
-	SharedBlocksRead    int       `json:"m_shared_blks_read_sum"`
-	SharedBlocksWritten int       `json:"m_shared_blks_written_sum"`
-	SharedBlocksHit     int       `json:"m_shared_blks_hit_sum"`
+	TotalBlocksRead     int       `json:"m_total_blks_read_sum"`
+	TotalBlocksWritten  int       `json:"m_total_blks_written_sum"`
+	TotalBlocksHit      int       `json:"m_total_blks_hit_sum"`
 }

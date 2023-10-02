@@ -67,14 +67,14 @@ type SlotDB struct {
 }
 
 type QueryDB struct {
-	Fingerprint        string             `json:"fingerprint"`
-	CPULoadWaitEvents  map[string]float64 `json:"cpu_load_wait_events"`
-	CPULoadTotal       float32            `json:"cpu_load_total"`
-	ParsedQuery        sql.NullString     `json:"parsed_query"`
-	Query              string             `json:"query"`
-	QuerySha           string             `json:"query_sha"`
-	IsQueryTruncated   uint8              `json:"is_query_truncated"`
-	IsQueryExplainable bool               `json:"is_query_explainable"`
+	Fingerprint           string             `json:"fingerprint"`
+	CPULoadWaitEvents     map[string]float64 `json:"cpu_load_wait_events"`
+	CPULoadTotal          float32            `json:"cpu_load_total"`
+	ParsedQuery           sql.NullString     `json:"parsed_query"`
+	Query                 string             `json:"query"`
+	QuerySha              string             `json:"query_sha"`
+	IsQueryTruncated      uint8              `json:"is_query_truncated"`
+	IsQueryNotExplainable bool               `json:"is_query_not_explainable"`
 }
 
 func (q QueryDB) GetSQL() string {

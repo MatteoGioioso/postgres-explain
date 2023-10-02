@@ -23,7 +23,7 @@ service Activities {
     };
   }
 
-  rpc GetTopQueriesByFingerprint(GetTopQueriesRequest) returns (GetTopQueriesResponse) {
+  rpc GetTopQueriesByFingerprint(GetTopQueriesRequest) returns (GetTopQueriesByFingerprintResponse) {
     option (google.api.http) = {
       post: "/v0/activities/GetTopQueriesByFingerprint"
       body: "*"
@@ -61,6 +61,10 @@ message QueriesMetrics {
   map<string, MetricValues> metrics = 1;
 }
 
+message QueriesWaitEvents {
+  map<string, Trace> traces = 1;
+}
+
 message QueryMetadata {
   string fingerprint = 1;
   repeated string parameters = 2;
@@ -70,7 +74,7 @@ message QueryMetadata {
   string database = 6;
   bool is_query_truncated = 7;
   string query_sha = 8;
-  bool is_query_explainable = 9;
+  bool is_query_not_explainable = 9;
 }
 
 message GetTopQueriesRequest {
@@ -97,3 +101,8 @@ message GetQueryDetailsResponse {
   map<string, Trace> traces = 1;
 }
 
+message GetTopQueriesByFingerprintResponse {
+  map<string, Trace> traces = 1;
+  QueriesMetrics query_metrics = 2;
+  map<string, QueryMetadata> queries_metadata = 3;
+}
