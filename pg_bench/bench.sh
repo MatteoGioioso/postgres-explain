@@ -39,7 +39,7 @@ pgbench -i -s 10 postgres
 while true; do
     sleep 10
     echo "Starting pgbench"
-    pgbench -c 8 -T 3600 -s 5 -b tpcb-like postgres
+    pgbench -c 8 -T 3600 -s 5 -f bench.sql postgres
 done
 
 

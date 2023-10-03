@@ -216,9 +216,9 @@ func (m *MetricsRepository) SelectQueryMetricsByFingerprint(
 type QueryMetricDB struct {
 	Timestamp           time.Time `json:"period_start"`
 	QueryTimeAvgPerCall float64   `json:"m_query_time_avg_per_call"`
-	NumQueries          int       `json:"num_queries"`
-	RowSent             int       `json:"m_rows_sent_sum"`
-	TotalBlocksRead     int       `json:"m_total_blks_read_sum"`
-	TotalBlocksWritten  int       `json:"m_total_blks_written_sum"`
-	TotalBlocksHit      int       `json:"m_total_blks_hit_sum"`
+	NumQueries          float64   `json:"num_queries"`
+	RowSent             float64   `json:"m_rows_sent_sum"`
+	TotalBlocksRead     float64   `json:"m_total_blks_read_sum"`
+	TotalBlocksWritten  float64   `json:"m_total_blks_written_sum"`
+	TotalBlocksHit      float64   `json:"m_total_blks_hit_sum"`
 }
