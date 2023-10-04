@@ -196,7 +196,7 @@ func (aps *Service) getMetricsForTopQueries(ctx context.Context, args QueryArgs,
 		},
 	)
 	if err != nil {
-		return nil, nil, errors.Wrapf(err, "cannot get get metrics totals")
+		return nil, nil, errors.Wrapf(err, "cannot get metrics totals")
 	}
 
 	totalLen := len(totalsList)
@@ -218,7 +218,9 @@ func (aps *Service) getMetricsForTopQueries(ctx context.Context, args QueryArgs,
 			Totals:             false,
 		})
 		if err != nil {
-			return nil, nil, err
+			errDetails := fmt.Errorf("cannot get metrics for fingerprint %v: %v", query.Fingerprint, err)
+			aps.log.Error(errDetails)
+			return nil, nil, errDetails
 		}
 		if len(metricsList) > 0 {
 			metrics := shared.MakeMetrics(metricsList[0], totals, durationSec)

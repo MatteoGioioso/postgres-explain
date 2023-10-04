@@ -166,7 +166,24 @@ func (ar Repository) GetQueryMetadataByFingerprint(ctx context.Context, fingerpr
 		Fingerprint: fingerprint,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("could not getQueryMetadata with fingerprint template: %v", err)
+		return nil, fmt.Errorf("could not getQueryMetadata with fingerprint %v: %v", fingerprint, err)
+	}
+
+	if len(metadata) > 0 {
+		return metadata[0], nil
+	}
+
+	return nil, nil
+}
+
+func (ar Repository) GetQueryMetadataBySha(ctx context.Context, sha string) (*QueryMetadata, error) {
+	metadata, err := ar.getQueryMetadata(ctx, getQueryMetadataByShaTmpl, struct {
+		Sha string `json:"query_sha"`
+	}{
+		Sha: sha,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("could not getQueryMetadata with sha %v: %v", sha, err)
 	}
 
 	if len(metadata) > 0 {

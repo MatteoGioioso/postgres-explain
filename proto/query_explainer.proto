@@ -44,7 +44,7 @@ message SaveQueryPlanRequest {
   string instance_name = 3;
   string cluster_name = 11;
 
-  string query_id = 4;
+  string query_sha = 4;
   string query_fingerprint = 12;
   string query = 7;
   string database = 5;

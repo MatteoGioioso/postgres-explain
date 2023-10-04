@@ -13,6 +13,7 @@ type PlanEntity struct {
 	OriginalPlan     string         `json:"original_plan"`
 	Query            string         `json:"query"`
 	QueryID          sql.NullString `json:"queryid"`
+	QuerySha         string         `json:"query_sha"`
 	QueryFingerprint string         `json:"query_fingerprint"`
 	ClusterName      string         `json:"cluster"`
 	Database         string         `json:"database"`

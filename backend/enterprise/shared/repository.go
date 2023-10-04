@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"log"
 	"text/template"
 	"time"
 
@@ -111,9 +110,9 @@ func (m *MetricsRepository) Get(ctx context.Context, gArgs MetricsGetArgs) ([]M,
 	}
 	var queryBuffer bytes.Buffer
 	if tmpl, err := template.New("queryMetricsTmpl").Funcs(FuncMap).Parse(queryMetricsTmpl); err != nil {
-		log.Fatalln(err)
+		return nil, fmt.Errorf("could not parse query template: %v", err)
 	} else if err = tmpl.Execute(&queryBuffer, tmplArgs); err != nil {
-		log.Fatalln(err)
+		return nil, fmt.Errorf("could not execute template: %v", err)
 	}
 	var results []M
 	query, args, err := sqlx.Named(queryBuffer.String(), arg)
@@ -131,7 +130,7 @@ func (m *MetricsRepository) Get(ctx context.Context, gArgs MetricsGetArgs) ([]M,
 
 	rows, err := m.db.QueryxContext(queryCtx, query, args...)
 	if err != nil {
-		return results, errors.Wrap(err, CannotExecute)
+		return results, fmt.Errorf("cannot execute query %v with args: %v", query, err)
 	}
 	defer rows.Close() //nolint:errcheck
 

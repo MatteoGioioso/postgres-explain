@@ -4,6 +4,7 @@ CREATE TABLE plans
     `alias`           String COMMENT 'custom alias for the plan',
     `query_fingerprint` LowCardinality(String) COMMENT 'query fingerprint',
     `queryid` LowCardinality(String) COMMENT 'hash of query fingerprint from postgres',
+    `query_sha` LowCardinality(String) COMMENT 'hash of query with parameters',
     `plan`            String COMMENT 'JSON string of the query plan',
     `original_plan`   String COMMENT 'JSON string of the original plan',
     `query`           String COMMENT 'query',

@@ -8,5 +8,5 @@ SELECT abalance FROM pgbench_accounts WHERE aid = :aid;
 UPDATE pgbench_tellers SET tbalance = tbalance + :delta WHERE tid = :tid;
 UPDATE pgbench_branches SET bbalance = bbalance + :delta WHERE bid = :bid;
 INSERT INTO pgbench_history (tid, bid, aid, delta, mtime) VALUES (:tid, :bid, :aid, :delta, CURRENT_TIMESTAMP);
-SELECT * FROM pgbench_accounts JOIN public.pgbench_branches pb on pgbench_accounts.bid = pb.bid ORDER BY abalance;
+SELECT * FROM pgbench_accounts JOIN public.pgbench_branches pb on pgbench_accounts.bid = pb.bid WHERE pb.bid = :bid ORDER BY abalance;
 END;

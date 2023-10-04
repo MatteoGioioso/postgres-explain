@@ -86,37 +86,13 @@ func (aps *Service) GetQueryPlansList(ctx context.Context, request *proto.GetQue
 }
 
 func (aps *Service) SaveQueryPlan(ctx context.Context, request *proto.SaveQueryPlanRequest) (*proto.SaveQueryPlanResponse, error) {
-	planRequest := &proto.PlanRequest{
-		InstanceName: request.InstanceName,
+	if err := aps.validateSaveRequest(request); err != nil {
+		return nil, fmt.Errorf("validation failed: %v", err)
 	}
 
-	if request.QueryFingerprint != "" {
-		queryMetadata, err := aps.ActivitiesRepo.GetQueryMetadataByFingerprint(ctx, request.QueryFingerprint)
-		if err != nil {
-			return nil, fmt.Errorf("could not GetQueryMetadataByFingerprint: %v", err)
-		}
-		if queryMetadata == nil {
-			return nil, fmt.Errorf("query metadata not found for fingerprint %v", request.QueryFingerprint)
-		}
-		if queryMetadata.IsQueryTruncated == 1 && request.Query == "" {
-			return nil, fmt.Errorf("query is truncated, cannot run an incomplete query")
-		}
-
-		if len(request.Parameters) > 0 {
-			var err error
-			planRequest.Query, err = shared.ConvertQueryWithParams(queryMetadata.ParsedQuery, paramsFromRequest(request.Parameters))
-			if err != nil {
-				return nil, fmt.Errorf("could not ConvertQueryWithParams: %v", err)
-			}
-		} else {
-			planRequest.Query = queryMetadata.ParsedQuery
-		}
-
-		planRequest.Database = queryMetadata.Database
-	}
-
-	if request.Query != "" {
-		planRequest.Query = request.Query
+	planRequest, err := aps.makePlanRequest(ctx, request)
+	if err != nil {
+		return nil, fmt.Errorf("could not makePlanRequest: %v", err)
 	}
 
 	plan, err := aps.CommandsClient.Explain(ctx, request.ClusterName, request.InstanceName, planRequest)
@@ -151,7 +127,7 @@ func (aps *Service) SaveQueryPlan(ctx context.Context, request *proto.SaveQueryP
 		Alias:            shared.ToSqlNullString(request.Alias),
 		Query:            planRequest.Query,
 		PlanID:           planId,
-		QueryID:          shared.ToSqlNullString(request.QueryId),
+		QuerySha:         "",
 		QueryFingerprint: fingerprint,
 		OriginalPlan:     plan.Plan,
 		ClusterName:      request.ClusterName,
@@ -224,9 +200,72 @@ func (aps *Service) processPlan(plan string) (pkg.Explained, error) {
 	}, nil
 }
 
+func (aps *Service) makePlanRequest(ctx context.Context, request *proto.SaveQueryPlanRequest) (*proto.PlanRequest, error) {
+	planRequest := &proto.PlanRequest{
+		InstanceName: request.InstanceName,
+		Database:     request.Database,
+		Query:        request.Query,
+	}
+
+	if request.QueryFingerprint != "" {
+		queryMetadata, err := aps.ActivitiesRepo.GetQueryMetadataByFingerprint(ctx, request.QueryFingerprint)
+		if err != nil {
+			return nil, fmt.Errorf("could not GetQueryMetadataByFingerprint: %v", err)
+		}
+		if queryMetadata == nil {
+			return nil, fmt.Errorf("query metadata not found for fingerprint %v", request.QueryFingerprint)
+		}
+		if queryMetadata.IsQueryTruncated == 1 && request.Query == "" {
+			return nil, fmt.Errorf("query is truncated, cannot run an incomplete query")
+		}
+
+		if len(request.Parameters) > 0 {
+			var err error
+			planRequest.Query, err = shared.ConvertQueryWithParams(queryMetadata.ParsedQuery, paramsFromRequest(request.Parameters))
+			if err != nil {
+				return nil, fmt.Errorf("could not ConvertQueryWithParams: %v", err)
+			}
+		} else {
+			planRequest.Query = queryMetadata.ParsedQuery
+		}
+
+		planRequest.Database = queryMetadata.Database
+	}
+
+	if request.QuerySha != "" {
+		queryMetadata, err := aps.ActivitiesRepo.GetQueryMetadataBySha(ctx, request.QuerySha)
+		if err != nil {
+			return nil, fmt.Errorf("could not GetQueryMetadataBySha: %v", err)
+		}
+		if queryMetadata == nil {
+			return nil, fmt.Errorf("query metadata not found for sha %v", request.QuerySha)
+		}
+		if queryMetadata.IsQueryTruncated == 1 && request.Query == "" {
+			return nil, fmt.Errorf("query is truncated, cannot run an incomplete query")
+		}
+
+		planRequest.Query = queryMetadata.Query
+		planRequest.Database = queryMetadata.Database
+	}
+
+	return planRequest, nil
+}
+
 func (aps *Service) validateSaveRequest(request *proto.SaveQueryPlanRequest) error {
-	if request.QueryFingerprint == "" && request.QueryId == "" && request.Query == "" {
+	if request.ClusterName == "" {
+		return fmt.Errorf("cluster_name is required")
+	}
+
+	if request.QueryFingerprint == "" && request.QuerySha == "" && request.Query == "" {
 		return fmt.Errorf("at least one of the following property is required: query_fingerprint, query_id, query")
+	}
+
+	if (request.QueryFingerprint == "" && request.QuerySha == "") && request.Database == "" {
+		return fmt.Errorf("if you are not suppling query_fingerprint or query_id, database is required to know where to run the query")
+	}
+
+	if request.QuerySha != "" && request.QueryFingerprint != "" {
+		return fmt.Errorf("both query_sha and query_fingerprint cannot be present at the same time")
 	}
 
 	return nil

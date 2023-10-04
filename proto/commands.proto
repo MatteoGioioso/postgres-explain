@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package borealis.v1beta1;
 
+import 'info.proto';
+
 option go_package = "/proto";
 
 service Commands {
@@ -13,6 +15,7 @@ message CommandRequest {
 
   oneof message {
     PlanRequest plan_request = 2;
+    GetDatabasesCommandRequest get_databases_request = 3;
   }
 }
 
@@ -21,6 +24,7 @@ message CommandResponse {
 
   oneof message {
     PlanResponse plan_response = 2;
+    GetDatabasesCommandResponse get_databases_response = 3;
   }
 }
 
@@ -31,10 +35,19 @@ message PlanRequest {
   string cluster_name = 7;
 }
 
+message GetDatabasesCommandRequest {
+  string instance_name = 1;
+}
+
 message PlanResponse  {
   string plan = 1;
 }
 
+message GetDatabasesCommandResponse {
+  repeated Database databases = 1;
+}
+
 enum ActionTypes {
   EXPLAIN = 0;
+  GET_DATABASES = 1;
 }
